@@ -1,0 +1,271 @@
+iqlims-server/
+├─ package.json
+├─ package-lock.json
+├─ .env
+├─ .env.example
+├─ .gitignore
+├─ README.md
+├─ app.js
+├─ server.js
+│
+├─ scripts/
+│  ├─ migrate.js
+│  ├─ seed.js
+│  ├─ bootstrapTenant.js
+│  └─ healthCheck.js
+│
+├─ docs/
+│  ├─ architecture.md
+│  ├─ er-diagram.md
+│  ├─ api-spec.yaml
+│  ├─ hl7-mappings.md
+│  ├─ fhir-support.md
+│  ├─ deployment.md
+│  └─ compliance/
+│     ├─ nabl.md
+│     ├─ cap.md
+│     └─ audit-controls.md
+│
+└─ src/
+   ├─ config/
+   │  ├─ db.js
+   │  ├─ env.js
+   │  ├─ logger.js
+   │  ├─ redis.js
+   │  ├─ queue.js
+   │  └─ storage.js
+   │
+   ├─ middlewares/
+   │  ├─ auth.middleware.js
+   │  ├─ rbac.middleware.js
+   │  ├─ tenant.middleware.js
+   │  ├─ audit.middleware.js
+   │  ├─ validate.middleware.js
+   │  ├─ error.middleware.js
+   │  └─ rateLimit.middleware.js
+   │
+   ├─ utils/
+   │  ├─ apiResponse.js
+   │  ├─ pagination.js
+   │  ├─ crypto.js
+   │  ├─ dateTime.js
+   │  ├─ pdfGenerator.js
+   │  ├─ barcode.js
+   │  └─ fileUpload.js
+   │
+   ├─ constants/
+   │  ├─ permissions.js
+   │  ├─ roles.js
+   │  ├─ enums.js
+   │  └─ statusCodes.js
+   │
+   ├─ routes/
+   │  ├─ index.routes.js
+   │  ├─ health.routes.js
+   │  └─ v1/
+   │     └─ v1.routes.js
+   │
+   ├─ database/
+   │  ├─ migrations/
+   │  ├─ seeds/
+   │  └─ associations.js
+   │
+   ├─ modules/
+   │
+   │  ├─ control-panel/
+   │  │  ├─ tenants/
+   │  │  │  ├─ tenant.model.js
+   │  │  │  ├─ tenantBranch.model.js
+   │  │  │  ├─ tenantFeature.model.js
+   │  │  │  ├─ tenantConfig.model.js
+   │  │  │  └─ tenantVersion.model.js
+   │  │  │
+   │  │  ├─ subscriptions/
+   │  │  │  ├─ plan.model.js
+   │  │  │  ├─ subscription.model.js
+   │  │  │  ├─ subscriptionUsage.model.js
+   │  │  │  ├─ saasInvoice.model.js
+   │  │  │  └─ saasPayment.model.js
+   │  │  │
+   │  │  ├─ iam/
+   │  │  │  ├─ users/
+   │  │  │  │  ├─ user.model.js
+   │  │  │  │  ├─ userSession.model.js
+   │  │  │  │  └─ userLoginAudit.model.js
+   │  │  │  ├─ roles/
+   │  │  │  │  ├─ role.model.js
+   │  │  │  │  └─ userRole.model.js
+   │  │  │  └─ permissions/
+   │  │  │     ├─ permission.model.js
+   │  │  │     └─ rolePermission.model.js
+   │  │  │
+   │  │  ├─ platform-masters/
+   │  │  │  ├─ country.model.js
+   │  │  │  ├─ state.model.js
+   │  │  │  ├─ city.model.js
+   │  │  │  ├─ unitOfMeasure.model.js
+   │  │  │  ├─ globalReferenceRange.model.js
+   │  │  │  └─ globalReportTemplate.model.js
+   │  │  │
+   │  │  └─ ops-monitoring/
+   │  │     ├─ platformLog.model.js
+   │  │     ├─ apiMetric.model.js
+   │  │     ├─ systemHealth.model.js
+   │  │     └─ incident.model.js
+   │
+   │  ├─ lis/
+   │  │  ├─ lab-setup/
+   │  │  │  ├─ labProfile.model.js
+   │  │  │  ├─ department.model.js
+   │  │  │  ├─ staff.model.js
+   │  │  │  ├─ doctor.model.js
+   │  │  │  ├─ referralCenter.model.js
+   │  │  │  ├─ analyzer.model.js
+   │  │  │  └─ reasonCode.model.js
+   │  │  │
+   │  │  ├─ patients/
+   │  │  │  ├─ patient.model.js
+   │  │  │  ├─ patientIdentifier.model.js
+   │  │  │  ├─ patientConsent.model.js
+   │  │  │  └─ patientMergeLog.model.js
+   │  │  │
+   │  │  ├─ test-catalog/
+   │  │  │  ├─ test.model.js
+   │  │  │  ├─ testParameter.model.js
+   │  │  │  ├─ testProfile.model.js
+   │  │  │  ├─ profileTest.model.js
+   │  │  │  ├─ referenceRange.model.js
+   │  │  │  ├─ criticalRange.model.js
+   │  │  │  ├─ specimenRequirement.model.js
+   │  │  │  ├─ testTat.model.js
+   │  │  │  ├─ outsourcedTest.model.js
+   │  │  │  └─ interpretiveComment.model.js
+   │  │  │
+   │  │  ├─ orders/
+   │  │  │  ├─ order.model.js
+   │  │  │  ├─ orderTest.model.js
+   │  │  │  ├─ orderStatusLog.model.js
+   │  │  │  ├─ standingOrder.model.js
+   │  │  │  └─ orderAmendment.model.js
+   │  │  │
+   │  │  ├─ specimen/
+   │  │  │  ├─ specimen.model.js
+   │  │  │  ├─ accession.model.js
+   │  │  │  ├─ chainOfCustodyLog.model.js
+   │  │  │  ├─ aliquot.model.js
+   │  │  │  ├─ storageLocation.model.js
+   │  │  │  ├─ specimenRejection.model.js
+   │  │  │  └─ recollectionRequest.model.js
+   │  │  │
+   │  │  ├─ worklists/
+   │  │  │  ├─ departmentWorklist.model.js
+   │  │  │  ├─ analyzerWorklist.model.js
+   │  │  │  ├─ batch.model.js
+   │  │  │  ├─ addOnTest.model.js
+   │  │  │  ├─ reflexRule.model.js
+   │  │  │  └─ tatMonitor.model.js
+   │  │  │
+   │  │  ├─ instruments/
+   │  │  │  ├─ analyzerInterface.model.js
+   │  │  │  ├─ analyzerTestMapping.model.js
+   │  │  │  ├─ instrumentResultQueue.model.js
+   │  │  │  ├─ analyzerStatusLog.model.js
+   │  │  │  ├─ maintenanceLog.model.js
+   │  │  │  └─ downtimeLog.model.js
+   │  │  │
+   │  │  ├─ results/
+   │  │  │  ├─ result.model.js
+   │  │  │  ├─ resultVersion.model.js
+   │  │  │  ├─ criticalResult.model.js
+   │  │  │  └─ criticalCallLog.model.js
+   │  │  │
+   │  │  ├─ validation/
+   │  │  │  ├─ resultVerification.model.js
+   │  │  │  ├─ resultApproval.model.js
+   │  │  │  ├─ electronicSignature.model.js
+   │  │  │  ├─ reworkRequest.model.js
+   │  │  │  ├─ emergencyOverride.model.js
+   │  │  │  └─ criticalAcknowledgement.model.js
+   │  │  │
+   │  │  ├─ reporting/
+   │  │  │  ├─ report.model.js
+   │  │  │  ├─ reportTemplate.model.js
+   │  │  │  ├─ reportVersion.model.js
+   │  │  │  ├─ cumulativeReport.model.js
+   │  │  │  ├─ reportGraph.model.js
+   │  │  │  └─ reprintLog.model.js
+   │  │  │
+   │  │  └─ dispatch/
+   │  │     ├─ reportDispatch.model.js
+   │  │     ├─ dispatchChannel.model.js
+   │  │     ├─ dispatchLog.model.js
+   │  │     ├─ deliveryFailure.model.js
+   │  │     └─ alertEscalation.model.js
+   │
+   │  ├─ quality/
+   │  │  ├─ qc/
+   │  │  │  ├─ qcSample.model.js
+   │  │  │  ├─ qcResult.model.js
+   │  │  │  ├─ qcRun.model.js
+   │  │  │  ├─ qcRule.model.js
+   │  │  │  ├─ qcApproval.model.js
+   │  │  │  └─ capaLog.model.js
+   │  │  │
+   │  │  ├─ maintenance/
+   │  │  │  ├─ equipment.model.js
+   │  │  │  ├─ calibrationSchedule.model.js
+   │  │  │  ├─ calibrationLog.model.js
+   │  │  │  ├─ maintenanceSchedule.model.js
+   │  │  │  ├─ serviceLog.model.js
+   │  │  │  └─ downtimeLog.model.js
+   │  │  │
+   │  │  └─ audit-compliance/
+   │  │     ├─ auditLog.model.js
+   │  │     ├─ userActivityLog.model.js
+   │  │     ├─ esignAuditLog.model.js
+   │  │     ├─ policyOverrideLog.model.js
+   │  │     └─ complianceReport.model.js
+   │
+   │  ├─ business/
+   │  │  ├─ billing/
+   │  │  │  ├─ rateCard.model.js
+   │  │  │  ├─ pricingRule.model.js
+   │  │  │  ├─ discount.model.js
+   │  │  │  ├─ labInvoice.model.js
+   │  │  │  ├─ labInvoiceItem.model.js
+   │  │  │  ├─ payment.model.js
+   │  │  │  ├─ receipt.model.js
+   │  │  │  ├─ creditNote.model.js
+   │  │  │  ├─ debitNote.model.js
+   │  │  │  ├─ agingBucket.model.js
+   │  │  │  └─ insuranceClaim.model.js
+   │  │  │
+   │  │  └─ inventory/
+   │  │     ├─ inventoryItem.model.js
+   │  │     ├─ inventoryLot.model.js
+   │  │     ├─ stockLedger.model.js
+   │  │     ├─ stockConsumption.model.js
+   │  │     ├─ purchaseRequest.model.js
+   │  │     ├─ purchaseOrder.model.js
+   │  │     ├─ goodsReceipt.model.js
+   │  │     ├─ stockAdjustment.model.js
+   │  │     └─ physicalStockCount.model.js
+   │
+   │  └─ integrations/
+   │     ├─ hl7/
+   │     │  ├─ interfaceConnector.model.js
+   │     │  ├─ hl7Message.model.js
+   │     │  ├─ messageMapping.model.js
+   │     │  ├─ mappingVersion.model.js
+   │     │  ├─ retryQueue.model.js
+   │     │  └─ deadLetterQueue.model.js
+   │     ├─ fhir/
+   │     │  └─ fhirResource.model.js
+   │     └─ dicom/
+   │        └─ dicomStudy.model.js
+   │
+   ├─ templates/
+   │  ├─ reports/
+   │  └─ emails/
+   │
+   └─ uploads/

@@ -1,0 +1,31 @@
+docker exec -it iqlims-mysql mysql -uroot -p ==> to get into db in terminal
+docker logs -f iqlims-api                    ==> to check db connection with docker
+
+
+
+
+
+to kill the ports
+
+netstat -ano | findstr :3000
+taskkill /PID 12345 /F
+
+
+
+
+Docker Running commands
+
+docker compose build --no-cache
+docker compose up
+
+
+
+
+To Remove Db from Docker
+
+docker ps
+docker exec -it iqlims-mysql mysql -u root -p
+McAdmin@123
+SHOW DATABASES;
+DROP DATABASE iqlims;
+CREATE DATABASE iqlims;

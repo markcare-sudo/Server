@@ -1,0 +1,72 @@
+[
+  { "key": "PLATFORM.TENANTS.CREATE", "module": "TENANTS", "action": "CREATE" },
+  { "key": "PLATFORM.TENANTS.VIEW", "module": "TENANTS", "action": "VIEW" },
+  { "key": "PLATFORM.TENANTS.UPDATE", "module": "TENANTS", "action": "UPDATE" },
+  { "key": "PLATFORM.TENANTS.DELETE", "module": "TENANTS", "action": "DELETE" },
+  { "key": "PLATFORM.TENANTS.SUSPEND", "module": "TENANTS", "action": "SUSPEND" },
+
+  { "key": "PLATFORM.USERS.CREATE", "module": "USERS", "action": "CREATE" },
+  { "key": "PLATFORM.USERS.VIEW", "module": "USERS", "action": "VIEW" },
+  { "key": "PLATFORM.USERS.UPDATE", "module": "USERS", "action": "UPDATE" },
+  { "key": "PLATFORM.USERS.DELETE", "module": "USERS", "action": "DELETE" },
+  { "key": "PLATFORM.USERS.RESET_PASSWORD", "module": "USERS", "action": "RESET_PASSWORD" },
+
+  { "key": "PLATFORM.ROLES.CREATE", "module": "ROLES", "action": "CREATE" },
+  { "key": "PLATFORM.ROLES.VIEW", "module": "ROLES", "action": "VIEW" },
+  { "key": "PLATFORM.ROLES.UPDATE", "module": "ROLES", "action": "UPDATE" },
+  { "key": "PLATFORM.ROLES.DELETE", "module": "ROLES", "action": "DELETE" },
+
+  { "key": "PLATFORM.PERMISSIONS.VIEW", "module": "PERMISSIONS", "action": "VIEW" },
+  { "key": "PLATFORM.PERMISSIONS.ASSIGN", "module": "PERMISSIONS", "action": "ASSIGN" },
+
+  { "key": "PLATFORM.BILLING.VIEW", "module": "BILLING", "action": "VIEW" },
+  { "key": "PLATFORM.BILLING.UPDATE", "module": "BILLING", "action": "UPDATE" },
+
+  { "key": "PLATFORM.PLANS.CREATE", "module": "PLANS", "action": "CREATE" },
+  { "key": "PLATFORM.PLANS.UPDATE", "module": "PLANS", "action": "UPDATE" },
+
+  { "key": "PLATFORM.SETTINGS.VIEW", "module": "SETTINGS", "action": "VIEW" },
+  { "key": "PLATFORM.SETTINGS.UPDATE", "module": "SETTINGS", "action": "UPDATE" }
+]
+
+
+[
+  { "key": "TENANT.PATIENTS.CREATE", "module": "PATIENTS", "action": "CREATE" },
+  { "key": "TENANT.PATIENTS.VIEW", "module": "PATIENTS", "action": "VIEW" },
+  { "key": "TENANT.PATIENTS.UPDATE", "module": "PATIENTS", "action": "UPDATE" },
+  { "key": "TENANT.PATIENTS.DELETE", "module": "PATIENTS", "action": "DELETE" },
+
+  { "key": "TENANT.TESTS.CREATE", "module": "TESTS", "action": "CREATE" },
+  { "key": "TENANT.TESTS.VIEW", "module": "TESTS", "action": "VIEW" },
+  { "key": "TENANT.TESTS.UPDATE", "module": "TESTS", "action": "UPDATE" },
+  { "key": "TENANT.TESTS.DELETE", "module": "TESTS", "action": "DELETE" },
+
+  { "key": "TENANT.ORDERS.CREATE", "module": "ORDERS", "action": "CREATE" },
+  { "key": "TENANT.ORDERS.VIEW", "module": "ORDERS", "action": "VIEW" },
+  { "key": "TENANT.ORDERS.UPDATE", "module": "ORDERS", "action": "UPDATE" },
+  { "key": "TENANT.ORDERS.CANCEL", "module": "ORDERS", "action": "CANCEL" },
+
+  { "key": "TENANT.REPORTS.VIEW", "module": "REPORTS", "action": "VIEW" },
+  { "key": "TENANT.REPORTS.GENERATE", "module": "REPORTS", "action": "GENERATE" },
+  { "key": "TENANT.REPORTS.DOWNLOAD", "module": "REPORTS", "action": "DOWNLOAD" },
+  { "key": "TENANT.REPORTS.DELETE", "module": "REPORTS", "action": "DELETE" },
+
+  { "key": "TENANT.BILLING.CREATE", "module": "BILLING", "action": "CREATE" },
+  { "key": "TENANT.BILLING.VIEW", "module": "BILLING", "action": "VIEW" },
+  { "key": "TENANT.BILLING.UPDATE", "module": "BILLING", "action": "UPDATE" },
+  { "key": "TENANT.BILLING.REFUND", "module": "BILLING", "action": "REFUND" },
+
+  { "key": "TENANT.USERS.CREATE", "module": "USERS", "action": "CREATE" },
+  { "key": "TENANT.USERS.VIEW", "module": "USERS", "action": "VIEW" },
+  { "key": "TENANT.USERS.UPDATE", "module": "USERS", "action": "UPDATE" },
+  { "key": "TENANT.USERS.DELETE", "module": "USERS", "action": "DELETE" },
+
+  { "key": "TENANT.ROLES.CREATE", "module": "ROLES", "action": "CREATE" },
+  { "key": "TENANT.ROLES.VIEW", "module": "ROLES", "action": "VIEW" },
+  { "key": "TENANT.ROLES.UPDATE", "module": "ROLES", "action": "UPDATE" },
+  { "key": "TENANT.ROLES.DELETE", "module": "ROLES", "action": "DELETE" },
+  { "key": "TENANT.PERMISSIONS.ASSIGN", "module": "PERMISSIONS", "action": "ASSIGN" },
+
+  { "key": "TENANT.DASHBOARD.VIEW", "module": "DASHBOARD", "action": "VIEW" },
+  { "key": "TENANT.ANALYTICS.VIEW", "module": "ANALYTICS", "action": "VIEW" }
+]

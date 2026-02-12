@@ -1,0 +1,48 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: markcare-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: McAdmin@123
+      MYSQL_DATABASE: markcare
+    ports:
+      - "3307:3306"
+    volumes:
+      - markcare_mysql_data:/var/lib/mysql
+
+  adminer:
+    image: adminer
+    container_name: markcare-adminer
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mysql
+
+  api:
+    build: .
+    container_name: markcare-api
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+
+      DB_HOST: markcare-mysql
+      DB_PORT: 3306
+      DB_NAME: markcare
+      DB_USER: root
+      DB_PASS: McAdmin@123
+
+      JWT_SECRET: "x#B@9d6*vW7!dU2Nx9K0p#4H8iPz9890"
+      BOOTSTRAP_SECRET: "MARKCARE_BOOTSTRAP_9f2a7c3d1e6b4"
+    depends_on:
+      - mysql
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+
+
+volumes:
+  iqlims_mysql_data:
+  node_modules:
+

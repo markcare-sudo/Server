@@ -1,0 +1,15 @@
+Signup Request
+   ↓
+Create Tenant
+   ↓
+Create User
+   ↓
+Seed RBAC (LAB_ADMIN + permissions)
+   ↓
+Create tenant_role
+   ↓
+Create tenant_user
+   ↓
+Create trial subscription
+   ↓
+COMMIT

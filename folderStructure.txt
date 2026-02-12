@@ -1,0 +1,204 @@
+iqlims-server/
+├─ package.json
+├─ .env
+├─ app.js
+├─ server.js
+└─ src/
+   ├─ config/
+   │  ├─ db.js
+   │  ├─ env.js
+   │  └─ logger.js
+   │
+   ├─ middlewares/
+   │  ├─ auth.middleware.js
+   │  ├─ rbac.middleware.js
+   │  ├─ tenant.middleware.js          (resolve tenantId, branchId)
+   │  ├─ validate.middleware.js
+   │  ├─ error.middleware.js
+   │  └─ rateLimit.middleware.js
+   │
+   ├─ utils/
+   │  ├─ apiResponse.js
+   │  ├─ pagination.js
+   │  ├─ crypto.js                     (encryption helpers if needed)
+   │  ├─ dateTime.js
+   │  └─ fileUpload.js                 (if storing reports/files)
+   │
+   ├─ constants/
+   │  ├─ permissions.js                (module/page/action map)
+   │  ├─ roles.js                      (role templates)
+   │  ├─ statusCodes.js
+   │  └─ enums.js
+   │
+   ├─ routes/
+   │  ├─ index.routes.js               (mount all module routes)
+   │  ├─ health.routes.js
+   │  └─ v1/
+   │     └─ v1.routes.js
+   │
+   ├─ modules/
+   │  ├─ control-panel/
+   │  │  ├─ tenants/
+   │  │  │  ├─ tenant.model.js
+   │  │  │  ├─ tenant.service.js
+   │  │  │  ├─ tenant.controller.js
+   │  │  │  ├─ tenant.routes.js
+   │  │  │  └─ tenant.validator.js
+   │  │  ├─ subscriptions/
+   │  │  │  ├─ subscription.model.js
+   │  │  │  ├─ subscription.service.js
+   │  │  │  ├─ subscription.controller.js
+   │  │  │  ├─ subscription.routes.js
+   │  │  │  └─ subscription.validator.js
+   │  │  ├─ iam/
+   │  │  │  ├─ users/
+   │  │  │  │  ├─ user.model.js
+   │  │  │  │  ├─ user.service.js
+   │  │  │  │  ├─ user.controller.js
+   │  │  │  │  ├─ user.routes.js
+   │  │  │  │  └─ user.validator.js
+   │  │  │  ├─ roles/
+   │  │  │  │  ├─ role.model.js
+   │  │  │  │  ├─ role.service.js
+   │  │  │  │  ├─ role.controller.js
+   │  │  │  │  ├─ role.routes.js
+   │  │  │  │  └─ role.validator.js
+   │  │  │  └─ permissions/
+   │  │  │     ├─ permission.model.js
+   │  │  │     ├─ permission.service.js
+   │  │  │     ├─ permission.controller.js
+   │  │  │     ├─ permission.routes.js
+   │  │  │     └─ permission.validator.js
+   │  │  ├─ platform-masters/
+   │  │  │  ├─ masters.model.js
+   │  │  │  ├─ masters.service.js
+   │  │  │  ├─ masters.controller.js
+   │  │  │  ├─ masters.routes.js
+   │  │  │  └─ masters.validator.js
+   │  │  └─ ops-monitoring/
+   │  │     ├─ ops.service.js
+   │  │     ├─ ops.controller.js
+   │  │     └─ ops.routes.js
+   │  │
+   │  ├─ lis/
+   │  │  ├─ lab-setup/
+   │  │  │  ├─ lab.model.js
+   │  │  │  ├─ lab.service.js
+   │  │  │  ├─ lab.controller.js
+   │  │  │  ├─ lab.routes.js
+   │  │  │  └─ lab.validator.js
+   │  │  ├─ patients/
+   │  │  │  ├─ patient.model.js
+   │  │  │  ├─ patient.service.js
+   │  │  │  ├─ patient.controller.js
+   │  │  │  ├─ patient.routes.js
+   │  │  │  └─ patient.validator.js
+   │  │  ├─ test-catalog/
+   │  │  │  ├─ test.model.js
+   │  │  │  ├─ test.service.js
+   │  │  │  ├─ test.controller.js
+   │  │  │  ├─ test.routes.js
+   │  │  │  └─ test.validator.js
+   │  │  ├─ orders/
+   │  │  │  ├─ order.model.js
+   │  │  │  ├─ order.service.js
+   │  │  │  ├─ order.controller.js
+   │  │  │  ├─ order.routes.js
+   │  │  │  └─ order.validator.js
+   │  │  ├─ specimen/
+   │  │  │  ├─ specimen.model.js
+   │  │  │  ├─ specimen.service.js
+   │  │  │  ├─ specimen.controller.js
+   │  │  │  ├─ specimen.routes.js
+   │  │  │  └─ specimen.validator.js
+   │  │  ├─ worklists/
+   │  │  │  ├─ worklist.model.js
+   │  │  │  ├─ worklist.service.js
+   │  │  │  ├─ worklist.controller.js
+   │  │  │  ├─ worklist.routes.js
+   │  │  │  └─ worklist.validator.js
+   │  │  ├─ instruments/
+   │  │  │  ├─ instrument.model.js
+   │  │  │  ├─ instrument.service.js
+   │  │  │  ├─ instrument.controller.js
+   │  │  │  ├─ instrument.routes.js
+   │  │  │  └─ instrument.validator.js
+   │  │  ├─ results/
+   │  │  │  ├─ result.model.js
+   │  │  │  ├─ result.service.js
+   │  │  │  ├─ result.controller.js
+   │  │  │  ├─ result.routes.js
+   │  │  │  └─ result.validator.js
+   │  │  ├─ validation/
+   │  │  │  ├─ validation.model.js
+   │  │  │  ├─ validation.service.js
+   │  │  │  ├─ validation.controller.js
+   │  │  │  ├─ validation.routes.js
+   │  │  │  └─ validation.validator.js
+   │  │  ├─ reporting/
+   │  │  │  ├─ report.model.js
+   │  │  │  ├─ report.service.js
+   │  │  │  ├─ report.controller.js
+   │  │  │  ├─ report.routes.js
+   │  │  │  └─ report.validator.js
+   │  │  └─ dispatch/
+   │  │     ├─ dispatch.model.js
+   │  │     ├─ dispatch.service.js
+   │  │     ├─ dispatch.controller.js
+   │  │     ├─ dispatch.routes.js
+   │  │     └─ dispatch.validator.js
+   │  │
+   │  ├─ quality/
+   │  │  ├─ qc/
+   │  │  │  ├─ qc.model.js
+   │  │  │  ├─ qc.service.js
+   │  │  │  ├─ qc.controller.js
+   │  │  │  ├─ qc.routes.js
+   │  │  │  └─ qc.validator.js
+   │  │  ├─ maintenance/
+   │  │  │  ├─ maintenance.model.js
+   │  │  │  ├─ maintenance.service.js
+   │  │  │  ├─ maintenance.controller.js
+   │  │  │  ├─ maintenance.routes.js
+   │  │  │  └─ maintenance.validator.js
+   │  │  └─ audit-compliance/
+   │  │     ├─ audit.model.js
+   │  │     ├─ audit.service.js
+   │  │     ├─ audit.controller.js
+   │  │     ├─ audit.routes.js
+   │  │     └─ audit.validator.js
+   │  │
+   │  ├─ business/
+   │  │  ├─ billing/
+   │  │  │  ├─ billing.model.js
+   │  │  │  ├─ billing.service.js
+   │  │  │  ├─ billing.controller.js
+   │  │  │  ├─ billing.routes.js
+   │  │  │  └─ billing.validator.js
+   │  │  └─ inventory/
+   │  │     ├─ inventory.model.js
+   │  │     ├─ inventory.service.js
+   │  │     ├─ inventory.controller.js
+   │  │     ├─ inventory.routes.js
+   │  │     └─ inventory.validator.js
+   │  │
+   │  └─ integrations/
+   │     ├─ hl7/
+   │     │  ├─ hl7.service.js
+   │     │  ├─ hl7.controller.js
+   │     │  ├─ hl7.routes.js
+   │     │  └─ hl7.parser.js
+   │     ├─ fhir/
+   │     │  ├─ fhir.service.js
+   │     │  ├─ fhir.controller.js
+   │     │  └─ fhir.routes.js
+   │     └─ dicom/
+   │        ├─ dicom.service.js
+   │        ├─ dicom.controller.js
+   │        └─ dicom.routes.js
+   │
+   ├─ templates/
+   │  ├─ reports/                      (PDF templates if needed)
+   │  └─ emails/
+   │
+   └─ uploads/                         (if local; otherwise S3)
