@@ -8,7 +8,7 @@ function buildApp() {
   // ✅ CORS (must be before routes)
   app.use(
     cors({
-      origin: "http://localhost:5173", // your React frontend
+      origin: "*", // your React frontend
       credentials: true,
       methods: ["GET", "POST", "PUT", "DELETE"],
       allowedHeaders: ["Content-Type", "Authorization"],
@@ -19,7 +19,7 @@ function buildApp() {
   app.use(express.urlencoded({ extended: true }));
   app.use(decryptBodyMiddleware);
 
-  app.get("/", (req, res) => res.send("✅ iQLIMS API running"));
+  app.get("/", (req, res) => res.send("✅ MCSERVER API running"));
 
   app.use(require("./routes/index.routes"));
 
