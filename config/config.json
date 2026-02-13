@@ -1,0 +1,25 @@
+{
+  "development": {
+    "username": "mcserver",
+    "password": "elOC7Gd9wz28wulmqRbmmTdmeQAQ4QDd",
+    "database": "mcserver_p35b",
+    "host": "dpg-d66nafmmcj7s73dmjmn0-a.oregon-postgres.render.com",
+    "dialect": "postgres",
+    "dialectOptions": {
+      "ssl": {
+        "require": true,
+        "rejectUnauthorized": false
+      }
+    }
+  },
+  "production": {
+    "use_env_variable": "DATABASE_URL",
+    "dialect": "postgres",
+    "dialectOptions": {
+      "ssl": {
+        "require": true,
+        "rejectUnauthorized": false
+      }
+    }
+  }
+}

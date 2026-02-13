@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "npx nodemon src/local.js"
+    "dev": "npx nodemon src/local.js",
+    "start": "npx sequelize-cli db:migrate && node src/app.js",
+    "migrate": "sequelize-cli db:migrate"
   },
   "keywords": [],
   "author": "",
@@ -21,6 +23,7 @@
     "bull": "^4.16.4",
     "bullmq": "^5.56.0",
     "bwip-js": "^4.5.1",
+    "cloudinary": "^1.41.3",
     "cors": "^2.8.6",
     "dayjs": "^1.11.13",
     "dotenv": "^16.5.0",
@@ -32,6 +35,7 @@
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.1",
     "multer": "^1.4.5-lts.1",
+    "multer-storage-cloudinary": "^4.0.0",
     "mysql2": "^3.16.1",
     "node-fetch": "^2.7.0",
     "nodemailer": "^6.10.1",
@@ -50,6 +54,7 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "sequelize-cli": "^6.6.5",
     "serverless": "^4.31.0",
     "serverless-offline": "^14.4.0"
   }

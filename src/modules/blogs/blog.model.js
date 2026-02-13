@@ -13,12 +13,14 @@ const Blog = sequelize.define(
     excerpt: { type: DataTypes.TEXT, allowNull: true },
     content: { type: DataTypes.TEXT("long"), allowNull: false },
 
-    featured_image: { type: DataTypes.STRING(500), allowNull: true },
+    featured_media: { type: DataTypes.STRING(500), allowNull: true },
+
+    media_type: { type: DataTypes.STRING },
 
     category: { type: DataTypes.STRING(120), allowNull: true },
     status: { type: DataTypes.ENUM("draft", "published", "archived"), allowNull: false, defaultValue: "draft" },
     view_count: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false, defaultValue: 0 },
-    
+
     seo_title: { type: DataTypes.STRING(255), allowNull: true },
     seo_description: { type: DataTypes.STRING(500), allowNull: true },
 
