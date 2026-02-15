@@ -21,6 +21,8 @@ const Blog = sequelize.define(
     status: { type: DataTypes.ENUM("draft", "published", "archived"), allowNull: false, defaultValue: "draft" },
     view_count: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false, defaultValue: 0 },
 
+    tags: { type: DataTypes.JSON, allowNull: true, defaultValue: [] },
+
     seo_title: { type: DataTypes.STRING(255), allowNull: true },
     seo_description: { type: DataTypes.STRING(500), allowNull: true },
 

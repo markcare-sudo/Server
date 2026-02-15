@@ -3,6 +3,7 @@
 const { Blog } = require("./blog.model");
 const { Op } = require("sequelize");
 const slugify = require("slugify");
+const { cloudinary_js_config } = require("../../config/cloudinary");
 
 const generateSlug = async (title) => {
     const baseSlug = slugify(title, { lower: true, strict: true });
@@ -18,6 +19,8 @@ const generateSlug = async (title) => {
 
 const createBlog = async (data) => {
     const slug = await generateSlug(data.title);
+
+    console.log(data)
 
     return Blog.create({
         ...data,
@@ -76,13 +79,28 @@ const getAllBlogs = async (query) => {
     };
 };
 
-
 const deleteBlog = async (id) => {
-    const blog = await Blog.findByPk(id);
-    if (!blog) throw new Error("Blog not found");
+  const blog = await Blog.findByPk(id);
+  if (!blog) throw new Error("Blog not found");
 
-    await blog.destroy();
-    return true;
+  // 🔥 Delete from Cloudinary using public_id
+  if (blog.featured_media) {
+    try {
+      await cloudinary_js_config.uploader.destroy(
+        blog.featured_media, // this is public_id
+        {
+          resource_type: blog.media_type === "video" ? "video" : "image",
+        }
+      );
+    } catch (error) {
+      console.error("Cloudinary delete failed:", error.message);
+    }
+  }
+
+  // Delete blog from DB
+  await blog.destroy();
+
+  return true;
 };
 
 module.exports = {
