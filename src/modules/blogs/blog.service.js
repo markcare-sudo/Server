@@ -20,8 +20,6 @@ const generateSlug = async (title) => {
 const createBlog = async (data) => {
     const slug = await generateSlug(data.title);
 
-    console.log(data)
-
     return Blog.create({
         ...data,
         slug,
