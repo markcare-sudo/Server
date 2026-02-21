@@ -32,6 +32,8 @@ require("../modules/control-panel/ima/assignments/joins.model");
 require("../modules/auth/otp/otp.model");
 
 require("../modules/blogs/blog.model");
+require("../modules/tags/tag.model");
+require("../modules/keywords/keyword.model");
 
 // Refresh tokens (JWT rotation)
 require("../modules/auth/tokens/refreshToken.model");
@@ -39,3 +41,4 @@ require("../modules/auth/tokens/refreshToken.model");
 
 
 
+require("./associations")();

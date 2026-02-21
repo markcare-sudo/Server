@@ -36,6 +36,22 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // src/config/database.js
 require("dotenv").config();
 const { Sequelize } = require("sequelize");
@@ -87,3 +103,63 @@ async function initDbOnce() {
 }
 
 module.exports = { sequelize, initDbOnce };
+
+
+
+
+
+
+
+
+
+
+
+// // src/config/database.js
+// require("dotenv").config();
+// const { Sequelize } = require("sequelize");
+
+// const useSSL = process.env.DB_SSL === "true";
+
+// const sequelize = new Sequelize(
+//   process.env.DB_NAME,
+//   process.env.DB_USER,
+//   process.env.DB_PASS,
+//   {
+//     host: process.env.DB_HOST || "localhost",
+//     port: Number(process.env.DB_PORT || 5432),
+//     dialect: "postgres",
+//     logging: false,
+
+//     dialectOptions: useSSL
+//       ? {
+//           ssl: {
+//             require: true,
+//             rejectUnauthorized: false,
+//           },
+//         }
+//       : {},
+//   }
+// );
+
+// let initialized = false;
+
+// async function initDbOnce() {
+//   if (initialized) return;
+
+//   try {
+//     await sequelize.authenticate();
+//     console.log("✅ PostgreSQL connected");
+
+//     require("../models");
+
+//     await sequelize.sync();
+//     console.log("✅ DB synced");
+
+//     initialized = true;
+//   } catch (error) {
+//     console.error("❌ Database connection failed:", error.message);
+//     process.exit(1);
+//   }
+// }
+
+// module.exports = { sequelize, initDbOnce };

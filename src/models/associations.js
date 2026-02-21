@@ -1,28 +1,41 @@
-module.exports = (db) => {
-  const {
-    Tenant,
-    SubscriptionPlan,
-    TenantSubscription,
-    Ratelist,
-    RatelistItem,
-    Test,
-  } = db;
+// src/models/associations.js
 
-  /* ================= TENANT ↔ SUBSCRIPTION ================= */
+module.exports = () => {
+  const { Blog } = require("../modules/blogs/blog.model");
+  const { Tag } = require("../modules/tags/tag.model");
+  const { Keyword } = require("../modules/keywords/keyword.model");
 
-  SubscriptionPlan.hasMany(TenantSubscription, { foreignKey: "plan_id" });
-  TenantSubscription.belongsTo(SubscriptionPlan, { foreignKey: "plan_id" });
+  /* =========================================================
+     BLOG ↔ TAG (Many-to-Many)
+  ========================================================= */
 
-  Tenant.hasMany(TenantSubscription, { foreignKey: "tenant_id" });
-  TenantSubscription.belongsTo(Tenant, { foreignKey: "tenant_id" });
+  Blog.belongsToMany(Tag, {
+    through: "blog_tags",
+    foreignKey: "blog_id",
+    otherKey: "tag_id",
+  });
 
-  /* ================= RATELIST ================= */
+  Tag.belongsToMany(Blog, {
+    through: "blog_tags",
+    foreignKey: "tag_id",
+    otherKey: "blog_id",
+  });
 
-  Ratelist.hasMany(RatelistItem, { foreignKey: "ratelist_id" });
-  RatelistItem.belongsTo(Ratelist, { foreignKey: "ratelist_id" });
+  /* =========================================================
+     BLOG ↔ KEYWORD (Many-to-Many)
+  ========================================================= */
 
-  /* ================= TEST USAGE ================= */
+  Blog.belongsToMany(Keyword, {
+    through: "blog_keywords",
+    foreignKey: "blog_id",
+    otherKey: "keyword_id",
+  });
 
-  Test.hasMany(RatelistItem, { foreignKey: "test_id" });
-  RatelistItem.belongsTo(Test, { foreignKey: "test_id" });
+  Keyword.belongsToMany(Blog, {
+    through: "blog_keywords",
+    foreignKey: "keyword_id",
+    otherKey: "blog_id",
+  });
+
+  console.log("✅ Model associations initialized");
 };
