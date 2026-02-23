@@ -21,6 +21,8 @@ router.use("/iam/assignments", require("../../modules/control-panel/ima/assignme
 
 // BLOGS MODULE ROUTES
 router.use("/blogs", require("../../modules/blogs/blog.routes"));
+router.use("/tags", require("../../modules/tags/tag.routes"));
+router.use("/keywords", require("../../modules/keywords/keyword.routes"));
 
 router.use("/callback-requests", require("../../modules/callbackRequest/callbackRequest.routes"));
 
