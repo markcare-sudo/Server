@@ -1,22 +1,137 @@
 /* modules/iam/roles/role.controller.js */
+
 const RoleService = require("./role.service");
 
+/**
+ * Create role
+ */
 async function create(req, res, next) {
   try {
-    const role = await RoleService.createRole(req.body);
-    res.status(201).json({ success: true, data: role });
+
+    const role = await RoleService.createRole({
+      ...req.body,
+      tenantId: req.user.tenant_id,
+      userId: req.user.id,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Role and permissions created successfully",
+      data: role,
+    });
+
   } catch (e) {
     next(e);
   }
 }
 
+/**
+ * Update role
+ */
+async function update(req, res, next) {
+  try {
+
+    const role = await RoleService.updateRole({
+      id: req.params.id,
+      ...req.body,
+      userId: req.user.id,
+    });
+
+    res.json({
+      success: true,
+      message: "Role and permissions updated successfully",
+      data: role,
+    });
+
+  } catch (e) {
+    next(e);
+  }
+}
+
+/**
+ * Soft delete role
+ */
+async function remove(req, res, next) {
+  try {
+
+    await RoleService.deleteRole({
+      id: req.params.id,
+    });
+
+    res.json({
+      success: true,
+      message: "Role deleted successfully",
+    });
+
+  } catch (e) {
+    next(e);
+  }
+}
+
+
+/**
+ * Permanent delete role
+ */
+async function permanentRemove(req, res, next) {
+  try {
+
+    await RoleService.permanentDeleteRole({
+      id: req.params.id,
+    });
+
+    res.json({
+      success: true,
+      message: "Role permanently deleted",
+    });
+
+  } catch (e) {
+    next(e);
+  }
+}
+
+/**
+ * List roles
+ */
 async function list(req, res, next) {
   try {
-    const roles = await RoleService.listRoles();
-    res.json({ success: true, data: roles });
+
+    const roles = await RoleService.listRoles({
+      tenantId: req.user.tenant_id,
+    });
+
+    res.json({
+      success: true,
+      data: roles,
+    });
+
   } catch (e) {
     next(e);
   }
 }
 
-module.exports = { create, list };
+async function getOne(req, res, next) {
+  try {
+
+    const role = await RoleService.getRole({
+      id: req.params.id,
+      tenantId: req.user.tenant_id,
+    });
+
+    res.json({
+      success: true,
+      data: role,
+    });
+
+  } catch (e) {
+    next(e);
+  }
+}
+
+module.exports = {
+  create,
+  update,
+  getOne,
+  list,
+  remove,
+  permanentRemove,
+};

@@ -10,7 +10,7 @@ const User = sequelize.define(
     name: { type: DataTypes.STRING(120), allowNull: false },
     email: { type: DataTypes.STRING(190), allowNull: false, unique: true },
     phone: { type: DataTypes.STRING(20), allowNull: true },
-    password_hash: { type: DataTypes.STRING(255), allowNull: false },
+    password_hash: { type: DataTypes.STRING(255), allowNull: true },
     is_super_admin: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
 
     is_active: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },

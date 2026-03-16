@@ -1,58 +1,365 @@
 /* modules/iam/roles/role.service.js */
+
+const { sequelize } = require("../../../../config/db");
+const { generateCodeFromName } = require("../../../../utils/generateCode");
 const { attachPermissionToRole } = require("../assignments/assignment.service");
 const { Role } = require("./role.model");
+const { RolePermission } = require("../assignments/joins.model");
+const { Permission } = require("../permissions/permission.model");
+const { log } = require("../../../../utils/auditLogger");
 
-async function seedTenantRBAC({ tenantId, transaction }) {
+/**
+ * Seed default RBAC for new tenant
+ */
+async function seedTenantRBAC({ tenantId, userId, transaction }) {
+
   if (!tenantId) {
     throw new Error("tenantId is required for RBAC seeding");
   }
 
-  /**
-   * STEP 1 — Create only LAB_ADMIN role
-   */
   const labAdminRole = await Role.create(
     {
       name: "Lab Admin",
       code: "LAB_ADMIN",
+      tenant_id: tenantId,
       description: "Full administrative access within this tenant",
-      is_system: true, // prevents deletion by Lab Admin (recommended)
+      is_active: true,
+      created_by: userId || null,
+      updated_by: userId || null,
     },
     { transaction }
   );
 
-  if (!labAdminRole) {
-    throw new Error("LAB_ADMIN role creation failed");
-  }
-
-  /**
-   * STEP 2 — (Recommended)
-   * Attach ALL permissions to LAB_ADMIN
-   */
   await attachPermissionToRole({
     roleId: labAdminRole.id,
-    permissionId: null, // null or special value to indicate "all permissions"
+    permissionId: null, // attach ALL permissions
+    transaction,
   });
 
-  /**
-   * STEP 3 — Return LAB_ADMIN role ID
-   */
+  await log({
+    tenantId: tenantId,
+    userId: userId,
+    action: "RBAC_SEED",
+    module: "roles",
+    entityId: labAdminRole.id,
+    description: "Default LAB_ADMIN role created during tenant setup",
+  });
+
   return {
     labAdminRoleId: labAdminRole.id,
     rolesCreated: 1,
   };
 }
 
-async function createRole({ name, code, description }) {
-  if (!name || !code) {
-    const err = new Error("name, code required");
+/**
+ * Create role with permissions
+ */
+async function createRole({ name, description, tenantId, userId, permissions = [] }) {
+
+  if (!name) {
+    const err = new Error("Role name is required");
     err.status = 400;
     throw err;
   }
-  return Role.create({name, code, description: description || null, is_active: true });
+
+  const code = generateCodeFromName(name);
+
+  return sequelize.transaction(async (transaction) => {
+
+    const role = await Role.create(
+      {
+        name,
+        code,
+        tenant_id: tenantId || null,
+        description: description || null,
+        is_active: true,
+        created_by: userId || null,
+        updated_by: userId || null,
+      },
+      { transaction }
+    );
+
+    if (permissions.length) {
+
+      const rows = permissions.map((permissionId) => ({
+        role_id: role.id,
+        permission_id: permissionId,
+      }));
+
+      await RolePermission.bulkCreate(rows, { transaction });
+
+    }
+
+    await log({
+      tenantId: tenantId,
+      userId: userId,
+      action: "CREATE_ROLE",
+      module: "roles",
+      entityId: role.id,
+      newValues: role.toJSON(),
+      description: `Role '${role.name}' created`,
+    });
+
+    return role;
+
+  });
+
 }
 
-async function listRoles() {
-  return Role.findAll({ order: [["id", "DESC"]] });
+/**
+ * Update role + sync permissions
+ */
+async function updateRole({ id, name, description, permissions, userId }) {
+  // 1. Get the role and capture "oldRole" state for audit logging
+  const role = await Role.findByPk(id);
+
+  if (!role) {
+    const err = new Error("Role not found");
+    err.status = 404;
+    throw err;
+  }
+
+  // ✅ Fix: Capture the snapshot BEFORE updating
+  const oldRole = role.toJSON();
+
+  return sequelize.transaction(async (transaction) => {
+    // 2. Update role basic info
+    await role.update({
+      name,
+      description,
+      updated_by: userId
+    }, { transaction });
+
+    // 3. Sync Permissions
+    if (permissions) {
+      const existing = await RolePermission.findAll({
+        where: { role_id: id },
+        attributes: ["permission_id"],
+        transaction
+      });
+
+      const existingIds = existing.map(p => p.permission_id);
+      const toInsert = permissions.filter(p => !existingIds.includes(p));
+      const toDelete = existingIds.filter(p => !permissions.includes(p));
+
+      if (toInsert.length) {
+        const rows = toInsert.map(permissionId => ({
+          role_id: id,
+          permission_id: permissionId,
+        }));
+        await RolePermission.bulkCreate(rows, { transaction });
+      }
+
+      if (toDelete.length) {
+        await RolePermission.destroy({
+          where: {
+            role_id: id,
+            permission_id: toDelete
+          },
+          transaction
+        });
+      }
+    }
+
+    // 4. Audit Log
+    await log({
+      tenantId: role.tenant_id,
+      userId: userId,
+      action: "UPDATE_ROLE",
+      module: "roles",
+      entityId: role.id,
+      oldValues: oldRole, // ✅ Now defined
+      newValues: { name, description, permissions },
+      description: `Role '${role.name}' updated`,
+    });
+
+    return role;
+  });
 }
 
-module.exports = { createRole, listRoles, seedTenantRBAC };
+/**
+ * List roles
+ */
+async function listRoles({ tenantId }) {
+
+  const where = {};
+
+  if (tenantId) {
+    where.tenant_id = tenantId;
+  }
+
+  const roles = await Role.findAll({
+    where,
+    attributes: [
+      "id",
+      "code",
+      "name",
+      "description",
+      "tenant_id",
+      "is_active",
+      "created_by",
+      "updated_by",
+      "created_at",
+      "updated_at",
+    ],
+    include: [
+      {
+        model: Permission,
+        attributes: ["id", "action", "feature_id", "module_id"],
+        through: { attributes: [] },
+      },
+    ],
+    order: [["created_at", "DESC"]],
+  });
+
+  return roles.map(role => ({
+    id: role.id,
+    name: role.name,
+    code: role.code,
+    is_active: role.is_active,
+    description: role.description,
+    permissions: role.Permissions.map(p => p.id)
+  }));
+
+}
+
+async function getRoleWithTree({ id, tenantId }) {
+
+  const role = await Role.findOne({
+    where: { id, tenant_id: tenantId },
+    include: [
+      {
+        model: Permission,
+        attributes: ["id"],
+        through: { attributes: [] },
+      },
+    ],
+  });
+
+  if (!role) throw new Error("Role not found");
+
+  const selectedPermissions = role.Permissions.map(p => p.id);
+
+  const modules = await PlatformModule.findAll({
+    include: [
+      {
+        model: PlatformFeature,
+        as: "features",
+        include: [
+          {
+            model: Permission,
+            attributes: ["id", "action"],
+          },
+        ],
+      },
+    ],
+  });
+
+  return {
+    role: {
+      id: role.id,
+      name: role.name,
+      description: role.description,
+      permissions: selectedPermissions,
+    },
+    tree: modules,
+  };
+}
+
+async function getRole({ id, tenantId }) {
+
+  const role = await Role.findOne({
+    where: {
+      id,
+      tenant_id: tenantId,
+    },
+    include: [
+      {
+        model: Permission,
+        attributes: ["id", "code", "action"],
+        through: {
+          attributes: [],
+        },
+      },
+    ],
+  });
+
+  if (!role) {
+    const err = new Error("Role not found");
+    err.status = 404;
+    throw err;
+  }
+
+  return {
+    id: role.id,
+    name: role.name,
+    description: role.description,
+    permissions: role.Permissions.map(p => p.id),
+  };
+}
+
+/**
+ * Soft delete role
+ */
+async function deleteRole({ id }) {
+
+  const role = await Role.findByPk(id);
+
+  if (!role) {
+    const err = new Error("Role not found");
+    err.status = 404;
+    throw err;
+  }
+
+  await role.destroy(); // paranoid soft delete
+
+  await log({
+    tenantId: role.tenant_id,
+    action: "DELETE_ROLE",
+    module: "roles",
+    entityId: role.id,
+    description: `Role '${role.name}' soft deleted`,
+  });
+
+  return true;
+}
+
+
+/**
+ * Permanent delete role
+ */
+async function permanentDeleteRole({ id }) {
+
+  const role = await Role.findByPk(id, {
+    paranoid: false, // include soft deleted
+  });
+
+  if (!role) {
+    const err = new Error("Role not found");
+    err.status = 404;
+    throw err;
+  }
+
+  await role.destroy({ force: true });
+
+  await log({
+    tenantId: role.tenant_id,
+    action: "PERMANENT_DELETE_ROLE",
+    module: "roles",
+    entityId: role.id,
+    description: `Role '${role.name}' permanently deleted`,
+  });
+
+  return true;
+}
+
+module.exports = {
+  createRole,
+  updateRole,
+  deleteRole,
+  permanentDeleteRole,
+  listRoles,
+  getRoleWithTree,
+  getRole,
+  seedTenantRBAC,
+};

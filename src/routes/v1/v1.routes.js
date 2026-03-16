@@ -5,9 +5,6 @@ const router = require("express").Router();
 router.use("/bootstrap", require("../../modules/control-panel/ima/bootstrap/bootstrap.routes"));
 
 // AUTH MODULE ROUTES
-router.use("/auth/signup", require("../../modules/auth/signup/signup.routes"));
-router.use("/auth/login", require("../../modules/auth/login/login.routes"));
-router.use("/auth/otp", require("../../modules/auth/otp/otp.routes"));
 router.use("/auth", require("../../modules/auth/auth.routes"));
 router.use("/auth/profile", require("../../modules/auth/profile/authProfile.routes"));
 

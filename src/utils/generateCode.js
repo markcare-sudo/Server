@@ -13,4 +13,15 @@ function generateTenantCodeFromName(name) {
   return `${slug}-${suffix}`;
 }
 
-module.exports = { generateTenantCodeFromName };
+function generateCodeFromName(name) {
+  if (!name) return "";
+
+  return name
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9\s]/g, "")   // remove special chars
+    .replace(/\s+/g, "_");         // spaces → underscore
+}
+
+
+module.exports = { generateTenantCodeFromName, generateCodeFromName };
