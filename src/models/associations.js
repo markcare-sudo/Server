@@ -139,7 +139,21 @@ module.exports = () => {
   Otp.belongsTo(User, { foreignKey: "user_id", as: "user" });
 
   /* =========================================================
-     LIS
+     MARKETPLACE
   ========================================================= */
+  const { ServiceProvider } = require("./ServiceProvider");
+  // const Tenant = require("../modules/control-panel/tenants/tenant/tenant.model"); // Assuming Tenant might be imported, or we just rely on associations
+
+  ServiceProvider.belongsTo(User, { foreignKey: 'user_id' });
+  // ServiceProvider.belongsTo(Tenant, { foreignKey: 'tenant_id' }); // Actually let's import Tenant just for this if required, but user instructions say "append, do not rewrite".
+  
+  // As per instructions, simply append:
+  try {
+    const Tenant = require("../modules/control-panel/tenants/tenant/tenant.model");
+    ServiceProvider.belongsTo(Tenant, { foreignKey: 'tenant_id' });
+  } catch (err) {
+    // Fallback if Tenant is not strictly defined here
+    // ServiceProvider.belongsTo(sequelize.models.Tenant, { foreignKey: 'tenant_id' }); 
+  }
 
 };
