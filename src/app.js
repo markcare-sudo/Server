@@ -5,6 +5,23 @@ const cors = require("cors");
 function buildApp() {
   const app = express();
 
+  // Public Health Endpoint
+  app.get("/api/health", (req, res) => {
+    res.status(200).json({
+      status: "ok",
+      version: "1.0.0",
+      timestamp: new Date().toISOString(),
+      env: process.env.NODE_ENV || "development"
+    });
+  });
+
+  // Swagger UI (Dev explicitly mapped routing structurally gracefully natively blocking Production leaks ideally if checked properly but requested strictly)
+  if (process.env.NODE_ENV !== "production") {
+    const swaggerUi = require("swagger-ui-express");
+    const swaggerSpec = require("./config/swagger");
+    app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  }
+
   // ✅ CORS (must be before routes)
   app.use(
     cors({
