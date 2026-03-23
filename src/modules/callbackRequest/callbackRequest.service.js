@@ -7,7 +7,7 @@ async function createCallbackRequest(payload) {
   const { product_name, product_price, phone, email } = payload;
 
   if (!phone ) {
-    const err = new Error(" phone are required");
+    const err = new Error("phone is required");
     err.status = 400;
     throw err;
   }

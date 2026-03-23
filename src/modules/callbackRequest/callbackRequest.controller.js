@@ -5,7 +5,7 @@ const CallbackRequestService = require("./callbackRequest.service");
 async function create(req, res, next) {
   try {
     const data = await CallbackRequestService.createCallbackRequest(req.body);
-    res.status(201).json({ success: true, message:"Callback request created successfully", data });
+    res.status(201).json({ success: true, message:"Callback requested successfully", data });
   } catch (e) {
     next(e);
   }
@@ -27,7 +27,7 @@ async function updateStatus(req, res, next) {
     const { status } = req.body;
 
     const updated = await CallbackRequestService.updateCallbackStatus({ id, status });
-    res.json({ success: true, data: updated });
+    res.json({ success: true, message: "Updated Successfully", data: updated });
   } catch (e) {
     next(e);
   }
