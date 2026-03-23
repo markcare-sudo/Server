@@ -24,31 +24,5 @@ router.use("/keywords", require("../../modules/keywords/keyword.routes"));
 router.use("/callback-requests", require("../../modules/callbackRequest/callbackRequest.routes"));
 
 // MARKETPLACE / SERVICE PROVIDERS
-router.use("/providers", require("../serviceProviderRoutes"));
-
-// MARKETPLACE / CATALOG
-router.use("/services", require("../catalogRoutes"));
-router.use("/products", require("../productRoutes"));
-
-// MARKETPLACE / BOOKINGS & ORDERS
-router.use("/bookings", require("../bookingRoutes"));
-router.use("/orders", require("../orderRoutes"));
-
-// MARKETPLACE / FINANCE
-router.use("/payments", require("../paymentRoutes"));
-
-// MARKETPLACE / COMMUNITY
-router.use("/reviews", require("../reviewRoutes"));
-
-// MARKETPLACE / SHOPPING CARTS
-router.use("/cart", require("../cartRoutes"));
-
-// MARKETPLACE / PROMOTIONS
-router.use("/coupons", require("../couponRoutes"));
-
-// CORE / SEARCH
-router.use("/search", require("../searchRoutes"));
-
-// router.use("/variants", require("../variantRoutes"));
 
 module.exports = router;
