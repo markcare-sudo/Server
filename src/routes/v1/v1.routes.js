@@ -23,6 +23,4 @@ router.use("/keywords", require("../../modules/keywords/keyword.routes"));
 
 router.use("/callback-requests", require("../../modules/callbackRequest/callbackRequest.routes"));
 
-// MARKETPLACE / SERVICE PROVIDERS
-
 module.exports = router;
