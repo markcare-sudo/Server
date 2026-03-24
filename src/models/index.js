@@ -3,15 +3,19 @@
 /* =========================================================
    CONTROL PANEL / MASTER DATA
 ========================================================= */
+require("../modules/control-panel/products/product.model");
+require("../modules/control-panel/brands/brand.model");
+require("../modules/control-panel/categories/category.model");
 
-// Otp Request 
-require("../modules/auth/otp/otp.model");
 
 
 
 /* =========================================================
    IAM (Identity & Access Management)
 ========================================================= */
+
+// Otp Request 
+require("../modules/auth/otp/otp.model");
 
 // Base IAM models
 require("../modules/control-panel/ima/users/user.model");
@@ -22,6 +26,8 @@ require("../modules/control-panel/ima/permissions/permission.model");
 
 // IAM joins / associations (MUST be after base models)
 require("../modules/control-panel/ima/assignments/joins.model");
+
+
 
 
 /* =========================================================

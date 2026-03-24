@@ -1,62 +1,30 @@
 const tagService = require("./tag.service");
+const asyncHandler = require("../../utils/asyncHandler");
+const { ok, created } = require("../../utils/apiResponse");
 
 /**
  * Create Tag
  */
-const createTag = async (req, res) => {
-  try {
-    const tag = await tagService.createTag(req.body);
-
-    res.status(201).json({
-      success: true,
-      message: "Tag created successfully",
-      data: tag,
-    });
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+const createTag = asyncHandler(async (req, res) => {
+  const tag = await tagService.createTag(req.body);
+  return created(res, { tag }, "Tag created successfully");
+});
 
 /**
  * Get All Tags
  */
-const getAllTags = async (req, res) => {
-  try {
-    const tags = await tagService.getAllTags();
-
-    res.status(200).json({
-      success: true,
-      data: tags,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+const getAllTags = asyncHandler(async (req, res) => {
+  const tags = await tagService.getAllTags();
+  return ok(res, tags);
+});
 
 /**
  * Delete Tag
  */
-const deleteTag = async (req, res) => {
-  try {
-    await tagService.deleteTag(req.params.id);
-
-    res.status(200).json({
-      success: true,
-      message: "Tag deleted successfully",
-    });
-  } catch (error) {
-    res.status(404).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+const deleteTag = asyncHandler(async (req, res) => {
+  await tagService.deleteTag(req.params.id);
+  return ok(res, null, "Tag deleted successfully");
+});
 
 module.exports = {
   createTag,

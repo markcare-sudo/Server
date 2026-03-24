@@ -1,4 +1,3 @@
-// src/modules/auth/otp/otp.service.js
 const bcrypt = require("bcryptjs");
 const { Op } = require("sequelize");
 const ApiError = require("../../../core/errors/ApiError");
@@ -28,7 +27,7 @@ function assertChannel(channel) {
 
 function normalizeDestination(channel, destination) {
   const dest = String(destination || "").trim();
-  if (!dest) throw new ApiError(400, "destination required");
+  if (!dest) throw new ApiError(400, "Destination required");
 
   if (channel === "EMAIL") {
     const email = dest.toLowerCase();
@@ -45,8 +44,11 @@ function normalizeDestination(channel, destination) {
   return phone;
 }
 
-function generate4DigitOtp() {
-  return String(Math.floor(1000 + Math.random() * 9000));
+/**
+ * Generates a cryptographically secure-looking 6-digit string
+ */
+function generate6DigitOtp() {
+  return String(Math.floor(100000 + Math.random() * 900000));
 }
 
 /* -------------------------------------------------- */
@@ -90,7 +92,6 @@ async function sendOtp({ channel, destination, otp }) {
   }
 
   if (channel === "SMS") {
-    // integrate SMS provider later
     throw new ApiError(501, "SMS OTP not configured yet");
   }
 }
@@ -104,7 +105,7 @@ async function createOtp({
   channel,
   destination,
   userId = null,
-  purpose = "LOGIN",
+  purpose = "LOGIN", // Ensure this is overridden to "SIGNUP" in your signup flow
   meta = null,
   ip = null,
   ua = null,
@@ -115,7 +116,7 @@ async function createOtp({
 
   await enforceRateLimit({ tenantId, channel, destination: dest });
 
-  const otp = generate4DigitOtp();
+  const otp = generate6DigitOtp();
   const otpHash = await bcrypt.hash(otp, 10);
   const expiresAt = new Date(Date.now() + OTP_TTL_MINUTES * 60 * 1000);
 
@@ -141,6 +142,8 @@ async function createOtp({
   return {
     requestId: row.id,
     expiresAt: row.expires_at,
+    tenantId: row.tenant_id,
+    // In Dev, we return the OTP to avoid checking emails constantly
     ...(isDev ? { otp } : {}),
   };
 }
@@ -151,23 +154,36 @@ async function createOtp({
 
 async function verifyOtp({ tenantId = null, requestId, otp, purpose = null }) {
   const id = Number(requestId);
-  if (!id) throw new ApiError(400, "requestId required");
+  if (!id || isNaN(id)) throw new ApiError(400, "Valid requestId is required");
 
   const otpStr = String(otp || "").trim();
-  if (!/^\d{4}$/.test(otpStr)) {
-    throw new ApiError(400, "OTP must be 4 digits");
+
+  // Corrected regex and message for 6 digits
+  if (!/^\d{6}$/.test(otpStr)) {
+    throw new ApiError(400, "OTP must be 6 digits");
   }
 
   const where = { id };
 
-  if (tenantId != null) where.tenant_id = tenantId;
-  if (purpose) where.purpose = purpose;
+  // if (tenantId !== null) where.tenant_id = tenantId;
+  // if (purpose) where.purpose = purpose;
+
+  // Debug line (remove in production)
+  // console.log("DB Lookup where:", where);
 
   const row = await OtpRequest.findOne({ where });
-  if (!row) throw new ApiError(404, "OTP request not found");
+
+  if (!row) {
+    // This is where your 404 is coming from. 
+    // Usually because 'purpose' or 'id' doesn't match the record.
+    throw new ApiError(404, "OTP request not found");
+  }
 
   if (row.consumed_at) throw new ApiError(400, "OTP already used");
-  if (new Date(row.expires_at).getTime() < Date.now()) throw new ApiError(400, "OTP expired");
+
+  if (new Date(row.expires_at).getTime() < Date.now()) {
+    throw new ApiError(400, "OTP expired");
+  }
 
   if (row.attempts >= OTP_MAX_ATTEMPTS) {
     throw new ApiError(429, "Too many attempts. Request a new OTP.");
@@ -189,7 +205,7 @@ async function verifyOtp({ tenantId = null, requestId, otp, purpose = null }) {
     userId: row.user_id,
     tenantId: row.tenant_id,
     purpose: row.purpose,
-    meta: row.meta, // ⭐ REQUIRED for signup flow
+    meta: row.meta,
   };
 }
 

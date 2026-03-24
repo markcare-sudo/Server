@@ -130,6 +130,8 @@ async function issueTokens(user, { ip, ua, transaction }) {
       id: user.id,
       name: user.name,
       email: user.email,
+      is_super_admin: user.is_super_admin,
+      is_platform_user: user.user_type,
       roleIds: roleIds,
     },
     accessToken,

@@ -12,7 +12,7 @@ const User = sequelize.define(
     phone: { type: DataTypes.STRING(20), allowNull: true },
     password_hash: { type: DataTypes.STRING(255), allowNull: true },
     is_super_admin: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
-
+    user_type: { type: DataTypes.ENUM('PLATFORM', 'CUSTOMER'), allowNull: false, defaultValue: 'CUSTOMER' },
     is_active: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
   },
   {

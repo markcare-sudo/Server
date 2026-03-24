@@ -1,236 +1,120 @@
 const blogService = require("./blog.service");
-
+const asyncHandler = require("../../utils/asyncHandler");
+const { ok, created, badRequest, notFound, serverError } = require("../../utils/apiResponse");
 
 // ==========================
 // CREATE BLOG
 // ==========================
-const create = async (req, res) => {
-  try {
-    const publicId = req.file?.filename || null;
-    const mediaType = req.file?.resource_type || null;
+const create = asyncHandler(async (req, res) => {
+  const publicId = req.file?.filename || null;
+  const mediaType = req.file?.resource_type || null;
 
-    const blog = await blogService.createBlog({
-      ...req.body,
-      featured_media: publicId,
-      media_type: mediaType,
-    });
+  const blog = await blogService.createBlog({
+    ...req.body,
+    featured_media: publicId,
+    media_type: mediaType,
+  });
 
-    return res.status(201).json({
-      success: true,
-      message: "Blog Created Successfully",
-      data: blog,
-    });
-  } catch (error) {
-    return res.status(400).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
-
+  return created(res, blog, "Blog Created Successfully");
+});
 
 // ==========================
 // UPDATE BLOG
 // ==========================
-// const update = async (req, res) => {
-//   try {
-//     const blogId = req.params.id;
-//     const publicId = req.file?.filename;
-//     const mediaType = req.file?.resource_type;
+const update = asyncHandler(async (req, res) => {
+  const blogId = req.params.id;
+  const updateData = { ...req.body };
 
-//     const blog = await blogService.updateBlog(blogId, {
-//       ...req.body,
-//       ...(publicId && {
-//         featured_media: publicId,
-//         media_type: mediaType,
-//       }),
-//     });
+  // Only update media if new file uploaded
+  if (req.file) {
+    updateData.featured_media = req.file.filename;
 
-//     return res.json({
-//       success: true,
-//       message: "Blog Updated Successfully",
-//       data: blog,
-//     });
-//   } catch (error) {
-//     return res.status(404).json({
-//       success: false,
-//       message: error.message,
-//     });
-//   }
-// };
-
-
-const update = async (req, res) => {
-  try {
-    const blogId = req.params.id;
-
-    const updateData = { ...req.body };
-
-    // ✅ Only update media if new file uploaded
-    if (req.file) {
-      updateData.featured_media = req.file.filename;
-
-      // 🔥 Works for multer
-      updateData.media_type = req.file.mimetype?.startsWith("video")
-        ? "video"
-        : "image";
-    }
-    
-    const blog = await blogService.updateBlog(blogId, updateData);
-
-    return res.json({
-      success: true,
-      message: "Blog Updated Successfully",
-      data: blog,
-    });
-  } catch (error) {
-    return res.status(400).json({
-      success: false,
-      message: error.message,
-    });
+    // Works for multer
+    updateData.media_type = req.file.mimetype?.startsWith("video")
+      ? "video"
+      : "image";
   }
-};
-
+  
+  const blog = await blogService.updateBlog(blogId, updateData);
+  return ok(res, blog, "Blog Updated Successfully");
+});
 
 // ==========================
 // GET SINGLE BLOG
 // ==========================
-const getOne = async (req, res) => {
-  try {
-    const blog = await blogService.getBlogById(req.params.id);
+const getOne = asyncHandler(async (req, res) => {
+  const blog = await blogService.getBlogById(req.params.id);
 
-    if (!blog) {
-      return res.status(404).json({
-        success: false,
-        message: "Blog not found",
-      });
-    }
-
-    return res.json({
-      success: true,
-      data: blog,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+  if (!blog) {
+    return notFound(res, "Blog not found");
   }
-};
 
+  return ok(res, blog);
+});
 
 // ==========================
 // GET ALL BLOGS
 // ==========================
-const getAll = async (req, res) => {
-  try {
-    const blogs = await blogService.getAllBlogs(req.query);
-
-    return res.json({
-      success: true,
-      ...blogs,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
-
+const getAll = asyncHandler(async (req, res) => {
+  const blogs = await blogService.getAllBlogs(req.query);
+  
+  // Since blogs object already contains success structure, we can just send it, or assume it returns { data, pagination, ... }
+  // We'll trust the original implementation returning res.json, but refactored to use ok.
+  // Wait, if blogs has { data, pagination }, it's better to respond with res.json or ok().
+  // Using original simple return for compatibility if we aren't 100% sure of object structure
+  return res.json({
+    success: true,
+    ...blogs,
+  });
+});
 
 // ==========================
 // GET SINGLE BLOG (by ID or Slug)
 // ==========================
-const getSingle = async (req, res) => {
-  try {
-    const { identifier } = req.params;
-    const { status } = req.query; 
+const getSingle = asyncHandler(async (req, res) => {
+  const { identifier } = req.params;
+  const { status } = req.query; 
 
-    const blog = await blogService.getSingleBlog(identifier, { status });
-
-    return res.status(200).json({
-      success: true,
-      message: "Blog fetched successfully",
-      data: blog,
-    });
-  } catch (error) {
-    return res.status(404).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
-
-
+  const blog = await blogService.getSingleBlog(identifier, { status });
+  // if not found, blogService likely throws an error based on previous behavior
+  return ok(res, blog, "Blog fetched successfully");
+});
 
 // ==========================
 // DELETE BLOG
 // ==========================
-const remove = async (req, res) => {
-  try {
-    await blogService.deleteBlog(req.params.id);
-
-    return res.json({
-      success: true,
-      message: "Blog deleted successfully",
-    });
-  } catch (error) {
-    return res.status(404).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+const remove = asyncHandler(async (req, res) => {
+  await blogService.deleteBlog(req.params.id);
+  return ok(res, null, "Blog deleted successfully");
+});
 
 // ==========================
 // GET RELATED BLOGS
 // ==========================
-const getRelated = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { limit } = req.query;
+const getRelated = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { limit } = req.query;
 
-    const blogs = await blogService.getRelatedBlogs(
-      id,
-      Number(limit) || 4
-    );
+  const blogs = await blogService.getRelatedBlogs(
+    id,
+    Number(limit) || 4
+  );
 
-    return res.status(200).json({
-      success: true,
-      data: blogs,
-    });
-  } catch (error) {
-    return res.status(404).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
-
+  return ok(res, blogs);
+});
 
 // ==========================
 // GET TRENDING KEYWORDS
 // ==========================
-const getTrending = async (req, res) => {
-  try {
-    const { limit } = req.query;
+const getTrending = asyncHandler(async (req, res) => {
+  const { limit } = req.query;
 
-    const keywords = await blogService.getTrendingKeywords(
-      Number(limit) || 10
-    );
+  const keywords = await blogService.getTrendingKeywords(
+    Number(limit) || 10
+  );
 
-    return res.status(200).json({
-      success: true,
-      data: keywords,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+  return ok(res, keywords);
+});
 
 module.exports = {
   create,

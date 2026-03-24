@@ -54,4 +54,19 @@ const paginated = (res, data, pagination, message = "Success") => {
   });
 };
 
-module.exports = { success, error, paginated };
+const ok = (res, data, message = "Success") => success(res, data, message, 200);
+const created = (res, data, message = "Created successfully") => success(res, data, message, 201);
+const badRequest = (res, message = "Bad Request", errors = null) => error(res, message, 400, errors);
+const notFound = (res, message = "Not Found") => error(res, message, 404);
+const serverError = (res, message = "Internal Server Error", errors = null) => error(res, message, 500, errors);
+
+module.exports = { 
+  success, 
+  error, 
+  paginated,
+  ok,
+  created,
+  badRequest,
+  notFound,
+  serverError
+};
