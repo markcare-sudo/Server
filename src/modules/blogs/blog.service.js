@@ -434,7 +434,7 @@ const generateSlug = async (title) => {
 
 const parseArrayInput = (input) => {
   if (typeof input === "string") {
-    try { return JSON.parse(input); } 
+    try { return JSON.parse(input); }
     catch { return input.split(",").map(t => t.trim()); }
   }
   return Array.isArray(input) ? input.filter(Boolean) : [];
@@ -560,21 +560,68 @@ const getBlogById = async (id) => {
   });
 };
 
+// const getSingleBlog = async (identifier, query = {}) => {
+//   const { status } = query;
+//   const where = isNaN(identifier) ? { slug: identifier } : { id: identifier };
+//   if (status) where.status = status;
+
+//   const blog = await Blog.findOne({
+//     where,
+//     include: [
+//       { model: Tag, as: "tags", through: { attributes: [] } },
+//       { model: Keyword, as: "keywords", through: { attributes: [] } },
+//     ],
+//   });
+
+//   if (!blog) throw new Error("Blog not found");
+//   await blog.increment("view_count");
+//   return blog;
+// };
+
+
 const getSingleBlog = async (identifier, query = {}) => {
   const { status } = query;
-  const where = isNaN(identifier) ? { slug: identifier } : { id: identifier };
-  if (status) where.status = status;
 
+  // 1. More robust ID vs Slug detection
+  const isId = /^\d+$/.test(identifier);
+  const where = isId ? { id: identifier } : { slug: identifier };
+
+  if (status) {
+    where.status = status;
+  }
+
+  // 2. Fetch the blog with includes
   const blog = await Blog.findOne({
     where,
     include: [
-      { model: Tag, as: "tags", through: { attributes: [] } },
-      { model: Keyword, as: "keywords", through: { attributes: [] } },
+      {
+        model: Tag,
+        as: "tags",
+        through: { attributes: [] }
+      },
+      {
+        model: Keyword,
+        as: "keywords",
+        through: { attributes: [] }
+      },
     ],
   });
 
-  if (!blog) throw new Error("Blog not found");
-  await blog.increment("view_count");
+  if (!blog) {
+    throw new Error("Blog not found");
+  }
+
+  // 3. Increment views WITHOUT losing data
+  // Using silent: true prevents the 'updated_at' from changing just for a view count
+  // We use the model increment method to avoid affecting the current 'blog' object instance
+  await Blog.increment('view_count', {
+    by: 1,
+    where: { id: blog.id },
+    silent: true
+  });
+
+  // Since increment was performed on the database, the 'blog' object 
+  // we fetched at step 2 still has all its tags and keywords safely attached.
   return blog;
 };
 
@@ -636,11 +683,11 @@ const getRelatedBlogs = async (blogId, limit = 4) => {
 
   return Blog.findAll({
     where: { id: { [Op.ne]: blogId }, status: "published" },
-    include: [{ 
-        model: Tag, 
-        as: "tags", 
-        where: { id: tagIds }, 
-        through: { attributes: [] } 
+    include: [{
+      model: Tag,
+      as: "tags",
+      where: { id: tagIds },
+      through: { attributes: [] }
     }],
     limit,
     distinct: true,
