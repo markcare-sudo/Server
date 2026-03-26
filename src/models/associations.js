@@ -4,7 +4,7 @@ const { Tag } = require("../modules/tags/tag.model");
 
 // IMPORT JUNCTION MODELS - Essential for Many-to-Many
 const { BlogTag } = require("../modules/blogs/blogTag.model");
-const { BlogKeyword } = require("../modules/blogs/blogKeyword.model"); 
+const { BlogKeyword } = require("../modules/blogs/blogKeyword.model");
 
 module.exports = () => {
    /* =========================================================
@@ -21,15 +21,15 @@ module.exports = () => {
    /* =========================================================
       IAM / RBAC
    ========================================================= */
-   Role.belongsToMany(Permission, { 
-      through: RolePermission, as: "permissions", 
-      foreignKey: "role_id", otherKey: "permission_id", 
-      onDelete: "CASCADE", onUpdate: "CASCADE" 
+   Role.belongsToMany(Permission, {
+      through: RolePermission, as: "permissions",
+      foreignKey: "role_id", otherKey: "permission_id",
+      onDelete: "CASCADE", onUpdate: "CASCADE"
    });
-   Permission.belongsToMany(Role, { 
-      through: RolePermission, as: "roles", 
+   Permission.belongsToMany(Role, {
+      through: RolePermission, as: "roles",
       foreignKey: "permission_id", otherKey: "role_id",
-      onDelete: "CASCADE", onUpdate: "CASCADE" 
+      onDelete: "CASCADE", onUpdate: "CASCADE"
    });
 
    User.belongsToMany(Role, { through: UserRole, as: "user_roles", foreignKey: "user_id", otherKey: "role_id" });
@@ -49,35 +49,44 @@ module.exports = () => {
    User.hasMany(Otp, { foreignKey: "user_id", as: "otps", onDelete: "CASCADE", onUpdate: "CASCADE" });
    Otp.belongsTo(User, { foreignKey: "user_id", as: "user" });
 
+
    /* =========================================================
-      BLOGS (LIS) - MANY-TO-MANY SETUP
-   ========================================================= */
-   
-   // Blog <-> Tag 
-   Blog.belongsToMany(Tag, { 
-      through: BlogTag, 
-      foreignKey: 'blog_id', 
-      otherKey: 'tag_id', 
-      as: 'tags' 
-   });
-   Tag.belongsToMany(Blog, { 
-      through: BlogTag, 
-      foreignKey: 'tag_id', 
-      otherKey: 'blog_id', 
-      as: 'blogs' 
+         BLOGS - MANY-TO-MANY SETUP (FINALIZED)
+      ========================================================= */
+
+   // 1. Blog <-> Tag 
+   // We use 'as: "tags"' to match your frontend and service layer
+   Blog.belongsToMany(Tag, {
+      through: 'blog_tags',
+      as: 'tags',           // CRITICAL: This fixes the "Alias Mismatch"
+      foreignKey: 'blog_id', // Matches your DB screenshot
+      otherKey: 'tag_id',    // Matches your DB screenshot
+      timestamps: true
    });
 
-   // Blog <-> Keyword
-   Blog.belongsToMany(Keyword, { 
-      through: BlogKeyword, 
-      foreignKey: 'blog_id', 
-      otherKey: 'keyword_id', 
-      as: 'keywords' 
+   Tag.belongsToMany(Blog, {
+      through: 'blog_tags',
+      as: 'blogs',
+      foreignKey: 'tag_id',
+      otherKey: 'blog_id',
+      timestamps: true
    });
-   Keyword.belongsToMany(Blog, { 
-      through: BlogKeyword, 
-      foreignKey: 'keyword_id', 
-      otherKey: 'blog_id', 
-      as: 'blogs' 
+
+   // 2. Blog <-> Keyword
+   // We use 'as: "keywords"' to match your frontend and service layer
+   Blog.belongsToMany(Keyword, {
+      through: 'blog_keywords',
+      as: 'keywords',       // CRITICAL: This fixes the "Alias Mismatch"
+      foreignKey: 'blog_id',
+      otherKey: 'keyword_id',
+      timestamps: true
+   });
+
+   Keyword.belongsToMany(Blog, {
+      through: 'blog_keywords',
+      as: 'blogs',
+      foreignKey: 'keyword_id',
+      otherKey: 'blog_id',
+      timestamps: true
    });
 };

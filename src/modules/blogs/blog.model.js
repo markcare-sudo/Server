@@ -6,7 +6,7 @@ const { sequelize } = require("../../config/db");
 const Blog = sequelize.define(
   "Blog",
   {
-    id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
+    id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true, field: 'id' },
     title: { type: DataTypes.STRING(255), allowNull: false },
     slug: { type: DataTypes.STRING(255), allowNull: false, unique: true },
 

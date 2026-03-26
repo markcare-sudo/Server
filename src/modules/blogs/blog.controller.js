@@ -34,7 +34,7 @@ const update = asyncHandler(async (req, res) => {
       ? "video"
       : "image";
   }
-  
+
   const blog = await blogService.updateBlog(blogId, updateData);
   return ok(res, blog, "Blog Updated Successfully");
 });
@@ -56,12 +56,9 @@ const getOne = asyncHandler(async (req, res) => {
 // GET ALL BLOGS
 // ==========================
 const getAll = asyncHandler(async (req, res) => {
+
   const blogs = await blogService.getAllBlogs(req.query);
-  
-  // Since blogs object already contains success structure, we can just send it, or assume it returns { data, pagination, ... }
-  // We'll trust the original implementation returning res.json, but refactored to use ok.
-  // Wait, if blogs has { data, pagination }, it's better to respond with res.json or ok().
-  // Using original simple return for compatibility if we aren't 100% sure of object structure
+
   return res.json({
     success: true,
     ...blogs,
@@ -73,7 +70,7 @@ const getAll = asyncHandler(async (req, res) => {
 // ==========================
 const getSingle = asyncHandler(async (req, res) => {
   const { identifier } = req.params;
-  const { status } = req.query; 
+  const { status } = req.query;
 
   const blog = await blogService.getSingleBlog(identifier, { status });
   // if not found, blogService likely throws an error based on previous behavior
