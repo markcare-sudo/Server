@@ -628,38 +628,94 @@ const getSingleBlog = async (identifier, query = {}) => {
 // ==========================
 // GET ALL BLOGS
 // ==========================
+// const getAllBlogs = async (query) => {
+//   const { page = 1, limit = 10, search, status, category, tag, keyword } = query;
+//   const where = {};
+
+//   if (search) where.title = { [Op.iLike]: `%${search}%` };
+//   if (status) where.status = status;
+//   if (category) where.category = category;
+
+//   const include = [
+//     {
+//       model: Tag,
+//       as: "tags",
+//       through: { attributes: [] },
+//       required: !!tag,
+//       ...(tag && { where: { slug: tag } }),
+//     },
+//     {
+//       model: Keyword,
+//       as: "keywords",
+//       through: { attributes: [] },
+//       required: !!keyword,
+//       ...(keyword && { where: { keyword: { [Op.iLike]: `%${keyword}%` } } }),
+//     },
+//   ];
+
+//   const { rows, count } = await Blog.findAndCountAll({
+//     where,
+//     include,
+//     distinct: true,
+//     offset: (Number(page) - 1) * Number(limit),
+//     limit: Number(limit),
+//     order: [["created_at", "DESC"]],
+//   });
+
+//   return {
+//     total: count,
+//     page: Number(page),
+//     pages: Math.ceil(count / limit),
+//     data: rows,
+//   };
+// };
+
 const getAllBlogs = async (query) => {
   const { page = 1, limit = 10, search, status, category, tag, keyword } = query;
   const where = {};
 
+  // 1. Basic Filters
   if (search) where.title = { [Op.iLike]: `%${search}%` };
   if (status) where.status = status;
   if (category) where.category = category;
 
+  // 2. Dynamic Include Array
   const include = [
     {
       model: Tag,
       as: "tags",
       through: { attributes: [] },
+      // required: true creates an INNER JOIN (filtering)
+      // required: false creates a LEFT JOIN (showing all)
       required: !!tag,
-      ...(tag && { where: { slug: tag } }),
+      ...(tag && {
+        where: {
+          slug: { [Op.iLike]: tag } // Case-insensitive slug match
+        }
+      }),
     },
     {
       model: Keyword,
       as: "keywords",
       through: { attributes: [] },
       required: !!keyword,
-      ...(keyword && { where: { keyword: { [Op.iLike]: `%${keyword}%` } } }),
+      ...(keyword && {
+        where: {
+          keyword: { [Op.iLike]: `%${keyword}%` }
+        }
+      }),
     },
   ];
 
+  // 3. Execution
   const { rows, count } = await Blog.findAndCountAll({
     where,
     include,
-    distinct: true,
+    distinct: true, // Prevents duplicate counts from the join
+    subQuery: false, // Ensures limit/offset applies to the main query correctly with joins
     offset: (Number(page) - 1) * Number(limit),
     limit: Number(limit),
-    order: [["created_at", "DESC"]],
+    order: [["createdAt", "DESC"]], // Ensure this matches your DB column name
   });
 
   return {
