@@ -95,9 +95,7 @@ async function permanentRemove(req, res, next) {
 async function list(req, res, next) {
   try {
 
-    const roles = await RoleService.listRoles({
-      tenantId: req.user.tenant_id,
-    });
+    const roles = await RoleService.listRoles(req.query);
 
     res.json({
       success: true,

@@ -7,6 +7,7 @@ const { Role } = require("./role.model");
 const { RolePermission } = require("../assignments/joins.model");
 const { Permission } = require("../permissions/permission.model");
 const { log } = require("../../../../utils/auditLogger");
+const { Op } = require("sequelize");
 
 /**
  * Seed default RBAC for new tenant
@@ -180,22 +181,58 @@ async function updateRole({ id, name, description, permissions, userId }) {
 /**
  * List roles
  */
-async function listRoles({ tenantId }) {
+async function listRoles(query) {
+  let { search, page = 1, limit = 10, startDate, endDate, status } = query;
+
+  page = parseInt(page);
+  limit = parseInt(limit);
+
+  const offset = (page - 1) * limit;
 
   const where = {};
 
-  if (tenantId) {
-    where.tenant_id = tenantId;
+  // ✅ CASE-INSENSITIVE SEARCH (FIXED + PREFIXED)
+  if (search) {
+    const searchValue = `%${search.toLowerCase()}%`;
+
+    where[Op.or] = [
+      sequelize.where(
+        sequelize.fn("LOWER", sequelize.col("Role.name")),
+        { [Op.like]: searchValue }
+      ),
+      sequelize.where(
+        sequelize.fn("LOWER", sequelize.col("Role.code")),
+        { [Op.like]: searchValue }
+      ),
+      sequelize.where(
+        sequelize.fn("LOWER", sequelize.col("Role.description")),
+        { [Op.like]: searchValue }
+      ),
+    ];
   }
 
-  const roles = await Role.findAll({
+  // ✅ STATUS FILTER
+  if (status) {
+    if (status === "ACTIVE") where.is_active = true;
+    if (status === "INACTIVE") where.is_active = false;
+  }
+
+  // ✅ DATE FILTER
+  if (startDate || endDate) {
+    where.created_at = {};
+
+    if (startDate) where.created_at[Op.gte] = new Date(startDate);
+    if (endDate) where.created_at[Op.lte] = new Date(endDate);
+  }
+
+  // ✅ FIND + COUNT (recommended)
+  const { rows, count } = await Role.findAndCountAll({
     where,
     attributes: [
       "id",
       "code",
       "name",
       "description",
-      "tenant_id",
       "is_active",
       "created_by",
       "updated_by",
@@ -210,17 +247,26 @@ async function listRoles({ tenantId }) {
       },
     ],
     order: [["created_at", "DESC"]],
+    limit,
+    offset,
   });
 
-  return roles.map(role => ({
-    id: role.id,
-    name: role.name,
-    code: role.code,
-    is_active: role.is_active,
-    description: role.description,
-    permissions: role.Permissions.map(p => p.id)
-  }));
-
+  return {
+    data: rows.map(role => ({
+      id: role.id,
+      name: role.name,
+      code: role.code,
+      is_active: role.is_active,
+      description: role.description,
+      permissions: role.Permissions.map(p => p.id),
+    })),
+    pagination: {
+      total: count,
+      page,
+      limit,
+      totalPages: Math.ceil(count / limit),
+    },
+  };
 }
 
 async function getRoleWithTree({ id, tenantId }) {

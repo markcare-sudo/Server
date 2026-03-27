@@ -8,17 +8,46 @@ const { sequelize } = require("../../../config/db");
  * Create Product with optional initial variants (Atomic Transaction)
  */
 async function createProduct(data) {
-    const { variants, images, ...productData } = data;
-    return await sequelize.transaction(async (t) => {
-        const slug = `${productData.name.toLowerCase().replace(/ /g, "-")}-${Date.now()}`;
-        const product = await Product.create({ ...productData, slug }, { transaction: t });
+    const { variants, images, name, ...productData } = data;
 
+    if (!name) throw new ApiError(400, "Product name is required.");
+
+    return await sequelize.transaction(async (t) => {
+        const slug = `${name.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`;
+        const product = await Product.create({ ...productData, name, slug }, { transaction: t });
+
+        // 1. Create Variants
+        let createdVariants = [];
         if (variants?.length) {
-            await ProductVariant.bulkCreate(variants.map(v => ({ ...v, product_id: product.id })), { transaction: t });
+            createdVariants = await ProductVariant.bulkCreate(
+                variants.map(v => ({ ...v, product_id: product.id })),
+                { transaction: t, returning: true } // returning: true gives us the new IDs
+            );
         }
+
+        // 2. Link Images (Global vs Variant Specific)
         if (images?.length) {
-            await ProductImage.bulkCreate(images.map(i => ({ ...i, product_id: product.id })), { transaction: t });
+            const imagePayload = images.map(img => {
+                let variant_id = null;
+
+                // If fieldName is 'variant_0_images', match it to createdVariants[0].id
+                const match = img.fieldName?.match(/variant_(\d+)_images/);
+                if (match && createdVariants[match[1]]) {
+                    variant_id = createdVariants[match[1]].id;
+                }
+
+                return {
+                    url: img.url,
+                    product_id: product.id,
+                    variant_id: variant_id,
+                    is_primary: img.is_primary || false,
+                    alt_text: img.alt_text || name
+                };
+            });
+
+            await ProductImage.bulkCreate(imagePayload, { transaction: t });
         }
+
         return product;
     });
 }
@@ -47,7 +76,7 @@ async function listProducts(query = {}) {
         order: [["created_at", "DESC"]]
     });
 
-    return { rows, pagination: { totalItems: count, totalPages: Math.ceil(count / parsedLimit), currentPage: page } };
+    return { data: rows, pagination: { totalItems: count, totalPages: Math.ceil(count / parsedLimit), currentPage: page } };
 }
 
 /**
@@ -108,25 +137,49 @@ async function getBySlug(slug) {
     return product;
 }
 
+
 /**
  * Update Product and Sync Variants
  */
 async function updateProduct(id, data) {
     const { variants, images, ...productData } = data;
+
     return await sequelize.transaction(async (t) => {
         const product = await Product.findByPk(id, { transaction: t });
         if (!product) throw new ApiError(404, "Product not found");
 
+        // Sync Slug
+        if (productData.name && productData.name !== product.name) {
+            productData.slug = `${productData.name.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`;
+        }
         await product.update(productData, { transaction: t });
 
+        // Sync Variants
         if (variants) {
-            const variantIds = variants.map(v => v.id).filter(Boolean);
-            await ProductVariant.destroy({ where: { product_id: id, id: { [Op.notIn]: variantIds } }, transaction: t });
+            const incomingIds = variants.map(v => v.id).filter(Boolean);
+            await ProductVariant.destroy({
+                where: { product_id: id, id: { [Op.notIn]: incomingIds } },
+                transaction: t
+            });
+
             for (const v of variants) {
-                if (v.id) await ProductVariant.update(v, { where: { id: v.id }, transaction: t });
-                else await ProductVariant.create({ ...v, product_id: id }, { transaction: t });
+                if (v.id) {
+                    await ProductVariant.update(v, { where: { id: v.id, product_id: id }, transaction: t });
+                } else {
+                    await ProductVariant.create({ ...v, product_id: id }, { transaction: t });
+                }
             }
         }
+
+        // Handle New Images
+        if (images?.length) {
+            // Note: Update logic for variant-specific images follows same pattern as create
+            await ProductImage.bulkCreate(
+                images.map(img => ({ ...img, product_id: id })),
+                { transaction: t }
+            );
+        }
+
         return product;
     });
 }

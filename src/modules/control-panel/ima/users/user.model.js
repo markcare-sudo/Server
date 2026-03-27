@@ -8,19 +8,26 @@ const User = sequelize.define(
   {
     id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
     name: { type: DataTypes.STRING(120), allowNull: false },
-    email: { type: DataTypes.STRING(190), allowNull: false, unique: true },
+    email: { type: DataTypes.STRING(190), allowNull: false },
     phone: { type: DataTypes.STRING(20), allowNull: true },
+    user_type: { type: DataTypes.ENUM("PLATFORM", "TENANT"), allowNull: false, defaultValue: "TENANT" },
     password_hash: { type: DataTypes.STRING(255), allowNull: true },
     is_super_admin: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
-    user_type: { type: DataTypes.ENUM('PLATFORM', 'CUSTOMER'), allowNull: false, defaultValue: 'CUSTOMER' },
+
+    // Verification Fields
+    verification_token: { type: DataTypes.STRING(255), allowNull: true },
+    verification_expires: { type: DataTypes.DATE, allowNull: true },
+
     is_active: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+    is_email_verified: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+    is_phone_verified: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
   },
   {
     tableName: "users",
     timestamps: true,
     underscored: true,
     paranoid: true,
-    indexes: [{ fields: ["email"] }],
+    indexes: [{ fields: ["email"] }, { fields: ["verification_token"] }],
   }
 );
 

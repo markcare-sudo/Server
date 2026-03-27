@@ -25,6 +25,16 @@ require("../modules/auth/otp/otp.model");
 require("../modules/auth/tokens/refreshToken.model");
 require("../modules/callbackRequest/callbackRequest.model");
 
+// Configarations
+require("../modules/control-panel/ima/platformModules/platformModule.model");
+require("../modules/control-panel/ima/platformFeatures/platformFeature.model");
+require("../modules/control-panel/ima/audit-logs/audit-log.model");
+
+// E-Commerce
+require("../modules/control-panel/brands/brand.model");
+require("../modules/control-panel/categories/category.model");
+require("../modules/control-panel/products/product.model");
+
 /* =========================================================
    INITIALIZE ALL LINKS
 ========================================================= */

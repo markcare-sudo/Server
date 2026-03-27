@@ -28,15 +28,8 @@ module.exports = async function authMiddleware(req, res, next) {
       return next(new ApiError(401, "Invalid or inactive user"));
     }
 
-    // Attach authenticated user context
-    req.user = {
-      id: user.id,
-      tenantId: user.tenantId,
-      branchId: user.branchId || null,
-    };
-
     // Optional: keep token claims if needed
-    req.auth = payload;
+    req.user = payload;
 
     next();
   } catch (error) {

@@ -16,7 +16,9 @@ async function createSuperAdmin({ name, email, password }) {
 
   // allow only when NO users exist
   const userCount = await User.count();
-  if (userCount > 0) throw new ApiError(403, "Bootstrap disabled (users already exist)");
+  if (userCount > 0) {
+    throw new ApiError(403, "Bootstrap disabled (users already exist)");
+  }
 
   const passwordHash = await bcrypt.hash(password, 10);
 
@@ -29,15 +31,29 @@ async function createSuperAdmin({ name, email, password }) {
     is_active: true,
   });
 
-  // create SUPER_ADMIN role (platform level → tenantId null)
-  const role = await Role.create({
-    tenant_id: null,
-    name: "SUPER_ADMIN",
-    code: "SUPER_ADMIN",
-    is_active: true,
+  // ✅ Check if SUPER_ADMIN role already exists
+  let role = await Role.findOne({
+    where: {
+      code: "SUPER_ADMIN",
+      tenant_id: null, // platform level
+    },
   });
 
-  await UserRole.create({ user_id: user.id, role_id: role.id });
+  // ✅ If not exists → create it
+  if (!role) {
+    role = await Role.create({
+      tenant_id: null,
+      name: "SUPER_ADMIN",
+      code: "SUPER_ADMIN",
+      is_active: true,
+    });
+  }
+
+  // ✅ Assign role
+  await UserRole.create({
+    user_id: user.id,
+    role_id: role.id,
+  });
 
   return { id: user.id, email: user.email };
 }

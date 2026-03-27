@@ -44,7 +44,7 @@ async function listBrands(query = {}) {
     });
 
     return {
-        rows,
+        data: rows,
         pagination: {
             totalItems: count,
             totalPages: Math.ceil(count / parsedLimit),

@@ -3,10 +3,10 @@ const crypto = require("crypto");
 
 function signAccessToken(user) {
   const payload = {
-    sub: String(user.id),
-    tenantId: user.tenantId,
-    branchId: user.branchId || null,
-    isSuperAdmin: Boolean(user.isSuperAdmin),
+    id: user.id,
+    sub: user.sub,
+    roleIds: user.roleIds,
+    is_super_admin: Boolean(user.is_super_admin),
   };
 
   return jwt.sign(payload, process.env.JWT_SECRET, {

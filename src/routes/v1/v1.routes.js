@@ -12,14 +12,21 @@ router.use("/auth/profile", require("../../modules/auth/profile/authProfile.rout
 router.use("/iam/permissions", require("../../modules/control-panel/ima/permissions/permission.routes"));
 router.use("/iam/roles", require("../../modules/control-panel/ima/roles/role.routes"));
 router.use("/iam/users", require("../../modules/control-panel/ima/users/user.routes"));
-router.use("/iam/tenant-roles", require("../../modules/control-panel/ima/tenant_roles/tenantRole.routes"));
-router.use("/iam/tenant-users", require("../../modules/control-panel/ima/tenant_users/tenantUser.routes"));
+router.use("/iam/modules", require("../../modules/control-panel/ima/platformModules/platformModule.routes"));
+router.use("/iam/features", require("../../modules/control-panel/ima/platformFeatures/platformFeature.routes"));
 router.use("/iam/assignments", require("../../modules/control-panel/ima/assignments/assignment.routes"));
 
+// PLATFORM CONFIGURATIONS
+
+router.use("/sidebar", require("../../modules/menu/menu.routes"));
+
+router.use("/dashboard", require("../../modules/dashboard/dashboard.routes"));
+router.use("/audit-logs", require("../../modules/control-panel/ima/audit-logs/audit-log.routes"));
+
 // CONTROL PANEL
-router.use("/brands", require("../../modules/control-panel/brands/brand.routes"));
-router.use("/categories", require("../../modules/control-panel/categories/category.routes"));
-router.use("/products", require("../../modules/control-panel/products/product.routes"));
+router.use("/catalog/brands", require("../../modules/control-panel/brands/brand.routes"));
+router.use("/catalog/categories", require("../../modules/control-panel/categories/category.routes"));
+router.use("/catalog/products", require("../../modules/control-panel/products/product.routes"));
 
 // BLOGS MODULE ROUTES
 router.use("/blogs", require("../../modules/blogs/blog.routes"));

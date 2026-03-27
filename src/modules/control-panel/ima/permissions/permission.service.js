@@ -4,6 +4,8 @@ const ApiError = require("../../../../core/errors/ApiError");
 const { Permission } = require("./permission.model");
 const { UserRole, RolePermission } = require("../assignments/joins.model"); // ✅ correct
 
+
+
 async function createPermission({ key, moduleKey, page, action, description }) {
   if (!key || !moduleKey || !page || !action) {
     throw new ApiError(400, "key, moduleKey, page, action required");
@@ -34,29 +36,33 @@ async function getUserPermissions(userId) {
 
   // 1) roleIds for user
   const userRoles = await UserRole.findAll({
-    where: { userId },
-    attributes: ["roleId"],
+    where: { user_id: userId }, // Your DB uses snake_case
+    attributes: ["role_id"],
   });
 
-  const roleIds = [...new Set(userRoles.map((r) => r.roleId))];
+  // FIX: Access the exact property name returned by the query
+  // Since you used attributes: ["role_id"], Sequelize puts it in .role_id
+  const roleIds = [...new Set(userRoles.map((r) => r.role_id || r.roleId))];
+  
   if (roleIds.length === 0) return [];
 
   // 2) permissionIds for those roles
   const rolePerms = await RolePermission.findAll({
-    where: { roleId: { [Op.in]: roleIds } }, // ✅ FIX
-    attributes: ["permissionId"],
+    where: { role_id: { [Op.in]: roleIds } }, 
+    attributes: ["permission_id"],
   });
 
-  const permissionIds = [...new Set(rolePerms.map((rp) => rp.permissionId))];
+  const permissionIds = [...new Set(rolePerms.map((rp) => rp.permission_id || rp.permissionId))];
   if (permissionIds.length === 0) return [];
 
   // 3) fetch permission keys
   const perms = await Permission.findAll({
-    where: { id: { [Op.in]: permissionIds } }, // ✅ FIX
-    attributes: ["key"],
+    where: { id: { [Op.in]: permissionIds } },
+    // IMPORTANT: Your DB result showed the column is 'code', not 'key'
+    attributes: ["code"], 
   });
 
-  return perms.map((p) => p.key);
+  return perms.map((p) => p.code);
 }
 
 module.exports = { createPermission, listPermissions, getUserPermissions };

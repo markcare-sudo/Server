@@ -1,19 +1,58 @@
 // src/constants/permissions.js
-module.exports = {
-  LIS: {
-    PATIENTS: {
-      VIEW: "lis.patients.view",
-      CREATE: "lis.patients.create",
-      UPDATE: "lis.patients.update",
-      DELETE: "lis.patients.delete",
-      MERGE: "lis.patients.merge",
+
+
+const PERMISSIONS = {
+  RBAC: {
+    MODULES: {
+      READ: "RBAC.MODULES.READ",
+      WRITE: "RBAC.MODULES.WRITE",
+      UPDATE: "RBAC.MODULES.UPDATE",
+      DELETE: "RBAC.MODULES.DELETE",
+    },
+    FEATURES: {
+      READ: "RBAC.FEATURES.READ",
+      WRITE: "RBAC.FEATURES.WRITE",
+      UPDATE: "RBAC.FEATURES.UPDATE",
+      DELETE: "RBAC.FEATURES.DELETE",
+    },
+    ROLES: {
+      READ: "RBAC.ROLES.READ",
+      WRITE: "RBAC.ROLES.WRITE",
+      UPDATE: "RBAC.ROLES.UPDATE",
+      DELETE: "RBAC.ROLES.DELETE",
+    },
+    USERS: {
+      READ: "RBAC.USERS.READ",
+      WRITE: "RBAC.USERS.WRITE",
+      UPDATE: "RBAC.USERS.UPDATE",
+      DELETE: "RBAC.USERS.DELETE",
     },
   },
-  CONTROL_PLANE: {
-    IAM: {
-      USERS_VIEW: "cp.iam.users.view",
-      USERS_MANAGE: "cp.iam.users.manage",
-      ROLES_MANAGE: "cp.iam.roles.manage",
-    },
+
+
+  PLATFORM_PERMISSION: {
+    READ: "PLATFORM_PERMISSION.READ",
+    WRITE: "PLATFORM_PERMISSION.WRITE",
+    UPDATE: "PLATFORM_PERMISSION.UPDATE",
+    DELETE: "PLATFORM_PERMISSION.DELETE",
+  },
+
+  SUBSCRIPTION_PLAN: {
+    READ: "SUBSCRIPTION_PLAN.READ",
+    WRITE: "SUBSCRIPTION_PLAN.WRITE",
+    UPDATE: "SUBSCRIPTION_PLAN.UPDATE",
+    DELETE: "SUBSCRIPTION_PLAN.DELETE",
+  },
+
+  PLAN_FEATURE: {
+    READ: "PLAN_FEATURE.READ",
+    UPDATE: "PLAN_FEATURE.UPDATE",
+  },
+
+  PLAN_PERMISSION: {
+    READ: "PLAN_PERMISSION.READ",
+    UPDATE: "PLAN_PERMISSION.UPDATE",
   },
 };
+
+module.exports = { PERMISSIONS }

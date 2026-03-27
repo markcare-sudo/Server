@@ -1,17 +1,16 @@
 /* modules/iam/auditLogs/auditLog.service.js */
 const AuditLog = require("./audit-log.model");
 const ApiError = require("../../../../core/errors/ApiError");
-const Tenant = require("../../tenants/tenant/tenant.model");
 const { User } = require("../users/user.model");
 
 /**
  * Create a new audit log entry
  */
 async function createLog(data) {
-  const { 
-    tenant_id, user_id, action, module, 
-    entity_id, old_values, new_values, 
-    description, ip_address, user_agent 
+  const {
+    user_id, action, module,
+    entity_id, old_values, new_values,
+    description, ip_address, user_agent
   } = data;
 
   if (!action || !module) {
@@ -19,7 +18,6 @@ async function createLog(data) {
   }
 
   return AuditLog.create({
-    tenant_id,
     user_id,
     action,
     module,
@@ -35,9 +33,8 @@ async function createLog(data) {
 /**
  * List audit logs with tenant filtering
  */
-async function listLogs(tenantId = null) {
+async function listLogs() {
   const where = {};
-  if (tenantId) where.tenant_id = tenantId;
 
   return AuditLog.findAll({
     where,
@@ -49,11 +46,6 @@ async function listLogs(tenantId = null) {
         model: User,
         as: "user", // Ensure this alias matches your model association
         attributes: ["id", "name", "email"], // Only get what you need
-      },
-      {
-        model: Tenant,
-        as: "tenant",
-        attributes: ["id", "display_name"], // Fetch organization name
       }
     ],
   });

@@ -1,32 +1,42 @@
 // src/middlewares/rbac.middleware.js
+
 const ApiError = require("../core/errors/ApiError");
 const { getUserPermissions } = require("../modules/control-panel/ima/permissions/permission.service");
 
 function requirePermission(permissionKey) {
   return async (req, res, next) => {
     try {
-      if (!req.user?.id) {
+      const user = req.user;
+
+      if (!user?.id) {
         return next(new ApiError(401, "Unauthenticated"));
       }
 
-      const userId = req.user.id;
+      console.log(req)
 
-      // Load permissions from DB
-      const permissions = await getUserPermissions(userId);
-
-      // ✅ TEMP DEBUG (remove in production)
-      // console.log("RBAC:", { userId, permissionKey, permissions });
-
-      if (!permissions.includes(permissionKey)) {
-        return next(new ApiError(403, "Access denied", {
-          required: permissionKey,
-          userId,
-          grantedCount: permissions.length
-        }));
+      // ✅ 1️⃣ Super Admin Bypass (NO DB HIT)
+      if (user.is_super_admin) {
+        return next();
       }
 
-      // Optional: attach to req for later usage
-      req.user.permissions = permissions;
+      const userId = user.id;
+
+      // ✅ 2️⃣ Load permissions only if not already loaded
+      let permissions = user.permissions;
+
+      if (!permissions) {
+        permissions = await getUserPermissions(userId);
+        req.user.permissions = permissions; // cache in request
+      }
+
+      // ✅ 3️⃣ Permission check
+      if (!permissions.includes(permissionKey)) {
+        return next(
+          new ApiError(403, "Access denied", {
+            required: permissionKey,
+          })
+        );
+      }
 
       next();
     } catch (err) {

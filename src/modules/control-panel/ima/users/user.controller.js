@@ -1,99 +1,152 @@
-/* modules/iam/users/user.controller.js */
 const UserService = require("./user.service");
 
-async function create(req, res, next) {
-  try {
-    const user = await UserService.createUser(req.body);
-    res.status(201).json({ success: true, data: user });
-  } catch (e) {
-    next(e);
-  }
-}
-
+/* ---------------- LIST ---------------- */
 async function list(req, res, next) {
   try {
-    const tenantId = req.user.tenantId; // from auth middleware
-    const users = await UserService.listUsers({ tenantId });
-    res.json({ success: true, data: users });
-  } catch (e) {
-    next(e);
+
+    const users = await UserService.listUsers(req.query);
+
+    res.json({
+      success: true,
+      data: users,
+    });
+
+  } catch (err) {
+    next(err);
   }
 }
 
-module.exports = { create, list };
+/* ---------------- GET ONE ---------------- */
+async function getOne(req, res, next) {
+  try {
 
+    const user = await UserService.getUser(req.params.id);
 
+    res.json({
+      success: true,
+      data: user,
+    });
 
+  } catch (err) {
+    next(err);
+  }
+}
 
+/* ---------------- CREATE ---------------- */
+async function create(req, res, next) {
+  try {
 
+    const user = await UserService.createUser(req.body);
 
+    res.status(201).json({
+      success: true,
+      message: "User Invited Successfully.",
+      data: user,
+    });
 
+  } catch (err) {
+    next(err);
+  }
+}
 
+/* modules/iam/users/user.controller.js */
 
+const verifyEmail = async (req, res) => {
+  try {
+    const { token } = req.query;
 
+    if (!token) {
+      return res.status(400).json({ message: "Verification token is missing." });
+    }
 
+    const result = await UserService.verifyUserToken(token);
 
+    return res.status(200).json({
+      status: "success",
+      message: result.message
+    });
+  } catch (error) {
+    return res.status(400).json({
+      status: "error",
+      message: error.message
+    });
+  }
+};
 
+/* ---------------- UPDATE ---------------- */
+async function update(req, res, next) {
+  try {
 
-// /* src/modules/iam/users/user.controller.js */
-// const bcrypt = require("bcryptjs");
-// const ApiError = require("../../../core/errors/ApiError");
-// const { User } = require("./user.model");
+    const user = await UserService.updateUser(
+      req.params.id,
+      req.body
+    );
 
-// async function create(req, res, next) {
-//   try {
-//     // OPTION A (recommended): take tenantId from token (safer for SaaS)
-//     // const tenantId = req.user?.tenantId;
+    res.json({
+      success: true,
+      data: user,
+    });
 
-//     // OPTION B: take tenantId from body (less safe, but ok for super-admin flows)
-//     const { tenantId, name, email, password, branchId } = req.body;
+  } catch (err) {
+    next(err);
+  }
+}
 
-//     if (!tenantId || !name || !email || !password) {
-//       throw new ApiError(400, "tenantId, name, email, password required");
-//     }
+/* ---------------- DELETE (SOFT) ---------------- */
+async function remove(req, res, next) {
+  try {
 
-//     // Prevent duplicates inside same tenant
-//     const existing = await User.findOne({ where: { tenantId, email } });
-//     if (existing) {
-//       throw new ApiError(409, "User already exists with this email", { userId: existing.id });
-//     }
+    await UserService.deleteUser(req.params.id);
 
-//     const passwordHash = await bcrypt.hash(password, 10);
+    res.json({
+      success: true,
+      message: "User deleted",
+    });
 
-//     const user = await User.create({
-//       tenantId,
-//       name,
-//       email,
-//       passwordHash,
-//       branchId: branchId || null,
-//       isActive: true,
-//     });
+  } catch (err) {
+    next(err);
+  }
+}
 
-//     // Never return passwordHash
-//     const safeUser = user.toJSON();
-//     delete safeUser.passwordHash;
+/* ---------------- RESTORE ---------------- */
+async function restore(req, res, next) {
+  try {
 
-//     return res.status(201).json({ success: true, data: safeUser });
-//   } catch (e) {
-//     next(e);
-//   }
-// }
+    await UserService.restoreUser(req.params.id);
 
-// async function list(req, res, next) {
-//   try {
-//     const tenantId = req.user?.tenantId;
-//     if (!tenantId) throw new ApiError(401, "Missing tenant context");
+    res.json({
+      success: true,
+      message: "User restored",
+    });
 
-//     const users = await User.findAll({
-//       where: { tenantId },
-//       order: [["id", "DESC"]],
-//       attributes: { exclude: ["passwordHash"] },
-//     });
+  } catch (err) {
+    next(err);
+  }
+}
 
-//     return res.json({ success: true, data: users });
-//   } catch (e) {
-//     next(e);
-//   }
-// }
+/* ---------------- PERMANENT DELETE ---------------- */
+async function permanentDelete(req, res, next) {
+  try {
 
-// module.exports = { create, list };
+    await UserService.permanentDeleteUser(req.params.id);
+
+    res.json({
+      success: true,
+      message: "User permanently deleted",
+    });
+
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = {
+  list,
+  getOne,
+  create,
+  verifyEmail,
+  update,
+  remove,
+  restore,
+  permanentDelete,
+};
