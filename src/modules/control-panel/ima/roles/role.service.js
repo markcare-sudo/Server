@@ -12,17 +12,12 @@ const { Op } = require("sequelize");
 /**
  * Seed default RBAC for new tenant
  */
-async function seedTenantRBAC({ tenantId, userId, transaction }) {
-
-  if (!tenantId) {
-    throw new Error("tenantId is required for RBAC seeding");
-  }
+async function seedTenantRBAC({ userId, transaction }) {
 
   const labAdminRole = await Role.create(
     {
       name: "Lab Admin",
       code: "LAB_ADMIN",
-      tenant_id: tenantId,
       description: "Full administrative access within this tenant",
       is_active: true,
       created_by: userId || null,
@@ -55,7 +50,7 @@ async function seedTenantRBAC({ tenantId, userId, transaction }) {
 /**
  * Create role with permissions
  */
-async function createRole({ name, description, tenantId, userId, permissions = [] }) {
+async function createRole({ name, description, userId, permissions = [] }) {
 
   if (!name) {
     const err = new Error("Role name is required");
@@ -71,7 +66,6 @@ async function createRole({ name, description, tenantId, userId, permissions = [
       {
         name,
         code,
-        tenant_id: tenantId || null,
         description: description || null,
         is_active: true,
         created_by: userId || null,
@@ -92,7 +86,6 @@ async function createRole({ name, description, tenantId, userId, permissions = [
     }
 
     await log({
-      tenantId: tenantId,
       userId: userId,
       action: "CREATE_ROLE",
       module: "roles",
@@ -269,10 +262,10 @@ async function listRoles(query) {
   };
 }
 
-async function getRoleWithTree({ id, tenantId }) {
+async function getRoleWithTree({ id }) {
 
   const role = await Role.findOne({
-    where: { id, tenant_id: tenantId },
+    where: { id },
     include: [
       {
         model: Permission,
@@ -312,12 +305,11 @@ async function getRoleWithTree({ id, tenantId }) {
   };
 }
 
-async function getRole({ id, tenantId }) {
+async function getRole({ id }) {
 
   const role = await Role.findOne({
     where: {
       id,
-      tenant_id: tenantId,
     },
     include: [
       {

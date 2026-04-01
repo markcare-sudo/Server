@@ -112,7 +112,6 @@ async function getOne(req, res, next) {
 
     const role = await RoleService.getRole({
       id: req.params.id,
-      tenantId: req.user.tenant_id,
     });
 
     res.json({

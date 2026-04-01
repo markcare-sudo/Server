@@ -1,57 +1,3 @@
-// // src/config/database.js
-// require("dotenv").config();
-// const { Sequelize } = require("sequelize");
-
-// const sequelize = new Sequelize(
-//   process.env.DB_NAME,
-//   process.env.DB_USER,
-//   process.env.DB_PASS, // ✅ make sure .env has DB_PASS
-//   {
-//     host: process.env.DB_HOST || "localhost",
-//     port: Number(process.env.DB_PORT || 3306),
-//     dialect: "mysql",
-//     logging: false,
-//   }
-// );
-
-// let initialized = false;
-
-// async function initDbOnce() {
-//   if (initialized) return;
-
-//   await sequelize.authenticate();
-//   console.log("✅ DB connected");
-
-//   // ✅ IMPORTANT: load all models BEFORE sync
-//   require("../models");
-
-//   // await sequelize.sync({ alter: true }); // dev only
-//   await sequelize.sync();
-//   console.log("✅ DB synced (tables created/updated)");
-
-//   initialized = true;
-// }
-
-// module.exports = { sequelize, initDbOnce };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // src/config/database.js
 require("dotenv").config();
 const { Sequelize } = require("sequelize");
@@ -66,7 +12,7 @@ const sequelize = isProduction
     dialectOptions: {
       ssl: {
         require: true,
-        rejectUnauthorized: false, // required for Render
+        rejectUnauthorized: false,
       },
     },
   })
@@ -94,8 +40,8 @@ async function initDbOnce() {
   require("../models");
 
   // ⚠ Use alter:true only in development
-  await sequelize.sync({ alter: true });
-  // await sequelize.sync();
+  // await sequelize.sync({ alter: true });
+  await sequelize.sync();
 
   console.log("✅ DB synced (tables created/updated)");
 
