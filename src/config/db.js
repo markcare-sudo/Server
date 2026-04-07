@@ -40,8 +40,8 @@ async function initDbOnce() {
   require("../models");
 
   // ⚠ Use alter:true only in development
-  // await sequelize.sync({ alter: true });
-  await sequelize.sync();
+  await sequelize.sync({ alter: true });
+  // await sequelize.sync();
 
   console.log("✅ DB synced (tables created/updated)");
 

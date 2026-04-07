@@ -51,7 +51,6 @@ async function seedTenantRBAC({ userId, transaction }) {
  * Create role with permissions
  */
 async function createRole({ name, description, userId, permissions = [] }) {
-
   if (!name) {
     const err = new Error("Role name is required");
     err.status = 400;
@@ -62,6 +61,24 @@ async function createRole({ name, description, userId, permissions = [] }) {
 
   return sequelize.transaction(async (transaction) => {
 
+    // ✅ Check for duplicate role (by name or code)
+    const existingRole = await Role.findOne({
+      where: {
+        [Op.or]: [
+          { name: name.trim() },
+          { code: code }
+        ]
+      },
+      transaction
+    });
+
+    if (existingRole) {
+      const err = new Error("Role already exists");
+      err.status = 409; // conflict
+      throw err;
+    }
+
+    // ✅ Create role
     const role = await Role.create(
       {
         name,
@@ -74,17 +91,17 @@ async function createRole({ name, description, userId, permissions = [] }) {
       { transaction }
     );
 
+    // ✅ Assign permissions
     if (permissions.length) {
-
       const rows = permissions.map((permissionId) => ({
         role_id: role.id,
         permission_id: permissionId,
       }));
 
       await RolePermission.bulkCreate(rows, { transaction });
-
     }
 
+    // ✅ Log activity
     await log({
       userId: userId,
       action: "CREATE_ROLE",
@@ -95,9 +112,7 @@ async function createRole({ name, description, userId, permissions = [] }) {
     });
 
     return role;
-
   });
-
 }
 
 /**
