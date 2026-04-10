@@ -38,6 +38,7 @@ async function listBrands(query = {}) {
 
     const { count, rows } = await Brand.findAndCountAll({
         where,
+        attributes: ["id", "name", "slug", "image_url", "description", "is_active", "created_at", "updated_at"],
         order: [["name", "ASC"]],
         limit: parsedLimit,
         offset,

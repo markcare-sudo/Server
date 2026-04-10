@@ -5,6 +5,7 @@ const { Permission } = require("../permissions/permission.model");
 const { generateCodeFromName } = require("../../../../utils/generateCode");
 const PlatformModule = require("../platformModules/platformModule.model");
 const { Op } = require("sequelize");
+const { log } = require("../../../../utils/auditLogger");
 
 /* ---------------- LIST ---------------- */
 async function listFeatures(query) {
@@ -65,6 +66,11 @@ async function listFeatures(query) {
   // ✅ FIND + COUNT
   const { rows, count } = await PlatformFeature.findAndCountAll({
     where,
+    attributes: [
+      "id", "code", "name", "description", "module_id",
+      "sort_order", "is_active",
+      "created_at", "updated_at",
+    ],
     include: [
       {
         model: PlatformModule,
@@ -198,6 +204,17 @@ async function createFeature(payload) {
 
       await Permission.bulkCreate(permissionRows, { transaction: t });
 
+      // AUDIT LOG
+      await log({
+        userId: user.id,
+        action: "CREATE",
+        module: "PLATFORM_FEATURE",
+        entityId: feature.id,
+        oldValues: null,
+        newValues: feature.toJSON(),
+        description: `Added feature for ${feature.name}`
+      });
+
       return feature;
     } catch (error) {
       console.error("DB ERROR:", error);
@@ -211,6 +228,8 @@ async function updateFeature(id, payload) {
 
   const feature = await getFeature(id);
 
+  const oldData = feature.toJSON();
+
   if (payload.name) {
 
     const name = payload.name.trim();
@@ -223,8 +242,6 @@ async function updateFeature(id, payload) {
     if (exists && exists.id !== feature.id) {
       throw new ApiError(409, "Feature already exists");
     }
-
-    const oldCode = feature.code;
 
     await sequelize.transaction(async (t) => {
 
@@ -255,6 +272,17 @@ async function updateFeature(id, payload) {
 
     });
 
+    // AUDIT LOG
+    await log({
+      userId: user.id,
+      action: "UPDATE",
+      module: "PLATFORM_FEATURE",
+      entityId: feature.id,
+      oldValues: oldData,
+      newValues: feature.toJSON(),
+      description: `Updated feature for ${feature.name}`
+    });
+
     return feature;
   }
 
@@ -263,26 +291,37 @@ async function updateFeature(id, payload) {
 }
 
 /* ---------------- DELETE ---------------- */
-async function deleteFeature(id) {
-
+async function deleteFeature(user, id) {
   const feature = await getFeature(id);
+
+  const oldData = feature.toJSON();
 
   return sequelize.transaction(async (t) => {
 
-    /* 1️⃣ Delete permissions related to this feature */
+    // 2️⃣ Clear permissions
     await Permission.destroy({
       where: { feature_id: feature.id },
-      transaction: t
+      transaction: t,
+      force: true
     });
 
-    /* 2️⃣ Delete feature */
-    await feature.destroy({ transaction: t });
+    // 3️⃣ Finally, delete the feature
+    await feature.destroy({ transaction: t, force: true });
+    // AUDIT LOG
+    await log({
+      userId: user.id,
+      action: "DELETE",
+      module: "PLATFORM_FEATURE",
+      entityId: feature.id,
+      oldValues: null,
+      newValues: oldData,
+      description: `Deleted feature for ${feature.name}`
+    });
 
     return true;
-
   });
-
 }
+
 
 module.exports = {
   listFeatures,

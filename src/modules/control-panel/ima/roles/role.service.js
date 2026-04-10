@@ -12,7 +12,7 @@ const { Op } = require("sequelize");
 /**
  * Seed default RBAC for new tenant
  */
-async function seedTenantRBAC({ userId, transaction }) {
+async function seedTenantRBAC(user, transaction) {
 
   const labAdminRole = await Role.create(
     {
@@ -50,7 +50,9 @@ async function seedTenantRBAC({ userId, transaction }) {
 /**
  * Create role with permissions
  */
-async function createRole({ name, description, userId, permissions = [] }) {
+async function createRole(user, payload) {
+  const { name, description, permissions = [] } = payload;
+
   if (!name) {
     const err = new Error("Role name is required");
     err.status = 400;
@@ -85,8 +87,8 @@ async function createRole({ name, description, userId, permissions = [] }) {
         code,
         description: description || null,
         is_active: true,
-        created_by: userId || null,
-        updated_by: userId || null,
+        created_by: user.id || null,
+        updated_by: user.id || null,
       },
       { transaction }
     );
@@ -103,8 +105,8 @@ async function createRole({ name, description, userId, permissions = [] }) {
 
     // ✅ Log activity
     await log({
-      userId: userId,
-      action: "CREATE_ROLE",
+      userId: user.id,
+      action: "CREATE",
       module: "roles",
       entityId: role.id,
       newValues: role.toJSON(),
@@ -118,7 +120,9 @@ async function createRole({ name, description, userId, permissions = [] }) {
 /**
  * Update role + sync permissions
  */
-async function updateRole({ id, name, description, permissions, userId }) {
+async function updateRole(user, id, payload) {
+  const { name, description, permissions = [] } = payload;
+
   // 1. Get the role and capture "oldRole" state for audit logging
   const role = await Role.findByPk(id);
 
@@ -136,7 +140,7 @@ async function updateRole({ id, name, description, permissions, userId }) {
     await role.update({
       name,
       description,
-      updated_by: userId
+      updated_by: user.id
     }, { transaction });
 
     // 3. Sync Permissions
@@ -172,9 +176,8 @@ async function updateRole({ id, name, description, permissions, userId }) {
 
     // 4. Audit Log
     await log({
-      tenantId: role.tenant_id,
-      userId: userId,
-      action: "UPDATE_ROLE",
+      userId: user.id,
+      action: "UPDATE",
       module: "roles",
       entityId: role.id,
       oldValues: oldRole, // ✅ Now defined
@@ -277,7 +280,7 @@ async function listRoles(query) {
   };
 }
 
-async function getRoleWithTree({ id }) {
+async function getRoleWithTree(id) {
 
   const role = await Role.findOne({
     where: { id },
@@ -320,7 +323,7 @@ async function getRoleWithTree({ id }) {
   };
 }
 
-async function getRole({ id }) {
+async function getRole(id) {
 
   const role = await Role.findOne({
     where: {
@@ -354,7 +357,7 @@ async function getRole({ id }) {
 /**
  * Soft delete role
  */
-async function deleteRole({ id }) {
+async function deleteRole(user, id) {
 
   const role = await Role.findByPk(id);
 
@@ -367,8 +370,8 @@ async function deleteRole({ id }) {
   await role.destroy(); // paranoid soft delete
 
   await log({
-    tenantId: role.tenant_id,
-    action: "DELETE_ROLE",
+    userId: user.id,
+    action: "DELETE",
     module: "roles",
     entityId: role.id,
     description: `Role '${role.name}' soft deleted`,
@@ -381,7 +384,7 @@ async function deleteRole({ id }) {
 /**
  * Permanent delete role
  */
-async function permanentDeleteRole({ id }) {
+async function permanentDeleteRole(user, id) {
 
   const role = await Role.findByPk(id, {
     paranoid: false, // include soft deleted
@@ -396,8 +399,8 @@ async function permanentDeleteRole({ id }) {
   await role.destroy({ force: true });
 
   await log({
-    tenantId: role.tenant_id,
-    action: "PERMANENT_DELETE_ROLE",
+    userId: user.id,
+    action: "PERMANENT_DELETE",
     module: "roles",
     entityId: role.id,
     description: `Role '${role.name}' permanently deleted`,

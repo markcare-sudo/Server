@@ -18,7 +18,12 @@ const requestOtp = asyncHandler(async (req, res) => {
     ua,
   });
 
-  return ok(res, { requestId: result.requestId }, "OTP sent successfully");
+  return ok(res, {
+    requestId: result.requestId,
+    expiresAt: result.expiresAt,
+    destination: identifier,
+    otp: result.otp,
+  }, "OTP sent successfully");
 });
 
 /**

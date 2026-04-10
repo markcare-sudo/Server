@@ -122,24 +122,31 @@ async function getUser(id, rawInstance = false) {
 }
 
 async function createUser(payload) {
-  const { name, email, phone, user_type, role_id } = payload;
+  const { name, email, phone, user_type, role_id, is_super_admin, is_active } = payload;
 
-  return await sequelize.transaction(async (t) => {
+  let user;
+  let verifyToken;
+
+  // ✅ TRANSACTION ONLY FOR DB
+  await sequelize.transaction(async (t) => {
+
     // 1. Validation
     const existingUser = await User.findOne({ where: { email }, transaction: t });
     if (existingUser) throw new Error("Email already registered");
 
-    // 2. Generate Token and Expiry (24 hours from now)
-    const verifyToken = crypto.randomBytes(32).toString("hex");
+    // 2. Generate Token
+    verifyToken = crypto.randomBytes(32).toString("hex");
     const expires = new Date();
     expires.setHours(expires.getHours() + 24);
 
     // 3. Create User
-    const user = await User.create({
+    user = await User.create({
       name,
       email,
       phone,
-      user_type: user_type || "TENANT",
+      user_type: user_type || "CUSTOMER",
+      is_super_admin: is_super_admin || false,
+      is_active: is_active || false,
       is_email_verified: false,
       verification_token: verifyToken,
       verification_expires: expires
@@ -148,23 +155,42 @@ async function createUser(payload) {
     // 4. Assign Role
     await UserRole.create({
       user_id: user.id,
-      role_id: Number(role_id)
+      role_id: Number(role_id),
+      created_by: user.id || null,
     }, { transaction: t });
 
-    // 5. Trigger Email (Fire and forget or handle error)
-    try {
-      const verifyUrl = `${process.env.FRONTEND_URL}/verify-email?token=${verifyToken}`;
-      await sendUserEmailVerificationLink({
-        to: user.email,
-        name: user.name,
-        verifyUrl,
-      });
-    } catch (err) {
-      console.error("Email failed to send, but user was created:", err.message);
-    }
-
-    return user;
   });
+
+  // ✅ AFTER TRANSACTION (NO LOCKS NOW)
+
+  // 5. Send Email (safe now)
+  try {
+    const verifyUrl = `${process.env.APP_BASE_URL}/verify-email?token=${verifyToken}`;
+
+    await sendUserEmailVerificationLink({
+      to: user.email,
+      name: user.name,
+      verifyUrl,
+    });
+
+  } catch (err) {
+    console.error("Email failed:", err.message);
+  }
+
+  // 6. Audit Log (safe now)
+  try {
+    await log({
+      action: "CREATE",
+      module: "USERS",
+      userId: user.id,
+      entityId: user.id,
+      description: "User created"
+    });
+  } catch (err) {
+    console.error("Audit log failed:", err.message);
+  }
+
+  return user;
 }
 
 async function verifyUserToken(token) {
@@ -206,9 +232,10 @@ async function verifyUserToken(token) {
   });
 }
 
-async function updateUser(id, payload) {
+async function updateUser(user, id, payload) {
   const userInstance = await User.findByPk(id);
   if (!userInstance) throw new Error("User not found");
+  const oldUser = userInstance.toJSON();
 
   return await sequelize.transaction(async (t) => {
     await userInstance.update(payload, { transaction: t });
@@ -227,6 +254,23 @@ async function updateUser(id, payload) {
       transaction: t
     });
 
+    // ✅ Transaction is COMMITTED. Locks are released. Now log.
+    try {
+      await log({
+        tenantId: userInstance.tenant_id || null,
+        userId: user.id,
+        action: "UPDATE",
+        module: "USERS",
+        entityId: userInstance.id,
+        oldValues: oldUser,
+        newValues: userInstance.toJSON(),
+        description: `User ${userInstance.email} updated`,
+      }); // No 't' needed here
+    } catch (logError) {
+      console.error("Audit log failed:", logError);
+      // We don't throw here because the user update was actually successful
+    }
+
     return formatUser(userInstance);
   });
 }
@@ -235,7 +279,7 @@ async function deleteUser(id) {
   const user = await User.findByPk(id);
   if (!user) throw new Error("User not found");
   await user.destroy();
-  await log({ action: "DELETE", module: "users", userId: id, entityId: id, description: `User '${user.email}' soft deleted` });
+  await log({ action: "DELETE", module: "SUSERS", userId: id, entityId: id, description: `User '${user.email}' soft deleted` });
   return true;
 }
 
@@ -243,7 +287,7 @@ async function restoreUser(id) {
   const user = await User.findByPk(id, { paranoid: false });
   if (!user) throw new Error("User not found");
   await user.restore();
-  await log({ action: "RESTORE", module: "users", userId: id, entityId: id, description: "User restored" });
+  await log({ action: "RESTORE", module: "SUSERS", userId: id, entityId: id, description: "User restored" });
   return true;
 }
 
@@ -251,7 +295,7 @@ async function permanentDeleteUser(id) {
   const user = await User.findByPk(id, { paranoid: false });
   if (!user) throw new Error("User not found");
   await user.destroy({ force: true });
-  await log({ action: "PERMANENT_DELETE", module: "users", userId: id, entityId: id, description: "User permanently deleted" });
+  await log({ action: "PERMANENT_DELETE", module: "SUSERS", userId: id, entityId: id, description: "User permanently deleted" });
   return true;
 }
 

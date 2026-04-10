@@ -15,7 +15,7 @@ const { list, getOne, create, update, remove, listModulesFeaturesPermissions } =
 
 
 router.get("/", authMiddleware, requirePermission(PERMISSIONS.RBAC.MODULES.READ), list);
-router.get("/:roleId/my-config", authMiddleware, requirePermission(PERMISSIONS.RBAC.MODULES.READ), listModulesFeaturesPermissions);
+router.get("/my-config", authMiddleware, requirePermission(PERMISSIONS.RBAC.MODULES.READ), listModulesFeaturesPermissions);
 router.get("/:id", authMiddleware, requirePermission(PERMISSIONS.RBAC.MODULES.READ), getOne);
 router.post("/", create);
 router.put("/:id", authMiddleware, requirePermission(PERMISSIONS.RBAC.MODULES.UPDATE), update);

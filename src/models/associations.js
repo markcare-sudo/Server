@@ -1,4 +1,5 @@
 const { Blog } = require("../modules/blogs/blog.model");
+const AuditLog = require("../modules/control-panel/ima/audit-logs/audit-log.model");
 const PlatformFeature = require("../modules/control-panel/ima/platformFeatures/platformFeature.model");
 const PlatformModule = require("../modules/control-panel/ima/platformModules/platformModule.model");
 const { Keyword } = require("../modules/keywords/keyword.model");
@@ -16,6 +17,10 @@ module.exports = () => {
 
    const RefreshToken = require("../modules/auth/tokens/refreshToken.model");
    const Otp = require("../modules/auth/otp/otp.model");
+
+   // 1. Tell Sequelize that an AuditLog entry belongs to a User
+   AuditLog.belongsTo(User, { foreignKey: "user_id", as: "user" });
+   User.hasMany(AuditLog, { foreignKey: "user_id", as: "auditLogs" });
 
    /* =========================================================
       IAM / RBAC

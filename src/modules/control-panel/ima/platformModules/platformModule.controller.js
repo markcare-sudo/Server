@@ -22,10 +22,8 @@ async function list(req, res, next) {
 }
 
 async function listModulesFeaturesPermissions(req, res, next) {
-  // Extract roleId from the URL parameter
-  const { roleId } = req.params;
   try {
-    const data = await getModulesFeaturesPermissions(roleId, req.user.is_super_admin);
+    const data = await getModulesFeaturesPermissions(req.user.roleIds[0], req.user.is_super_admin);
     return res.json({
       success: true,
       message: "Modules, features and permissions fetched successfully",
@@ -53,7 +51,7 @@ async function getOne(req, res, next) {
 /* ---------------- CREATE ---------------- */
 async function create(req, res, next) {
   try {
-    const data = await createModule(req.body);
+    const data = await createModule(req.user, req.body);
     return res.status(201).json({
       success: true,
       message: "Module created successfully",
@@ -67,7 +65,7 @@ async function create(req, res, next) {
 /* ---------------- UPDATE ---------------- */
 async function update(req, res, next) {
   try {
-    const data = await updateModule(req.params.id, req.body);
+    const data = await updateModule(req.user, req.params.id, req.body);
     return res.json({
       success: true,
       message: "Module updated successfully",
@@ -81,7 +79,7 @@ async function update(req, res, next) {
 /* ---------------- DELETE ---------------- */
 async function remove(req, res, next) {
   try {
-    await deleteModule(req.params.id);
+    await deleteModule(req.user, req.params.id);
     return res.json({
       success: true,
       message: "Module deleted successfully",

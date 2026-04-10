@@ -6,6 +6,7 @@ const { Permission } = require("../permissions/permission.model");
 const PlatformFeature = require("../platformFeatures/platformFeature.model");
 const { Role } = require("../roles/role.model");
 const { Op } = require("sequelize");
+const { log } = require("../../../../utils/auditLogger");
 
 /* ---------------- LIST ---------------- */
 async function listModules(query) {
@@ -146,7 +147,7 @@ async function getModule(id) {
 }
 
 /* ---------------- CREATE ---------------- */
-async function createModule(payload) {
+async function createModule(user, payload) {
   const name = payload.name?.trim();
   const path = payload.path?.trim();
 
@@ -183,12 +184,24 @@ async function createModule(payload) {
 
     await Permission.bulkCreate(permissionRows, { transaction: t });
 
+    // AUDIT LOG
+    await log({
+      userId: user.id,
+      action: "CREATE",
+      module: "PLATFORM_MODULE",
+      entityId: module.id,
+      oldValues: null,
+      newValues: module.toJSON(),
+      description: `Added module ${module.name}`
+    });
+
+
     return module;
   });
 }
 
 /* ---------------- UPDATE ---------------- */
-async function updateModule(id, payload) {
+async function updateModule(user, id, payload) {
   if (!id) throw new ApiError(400, "Module ID is required");
 
   // 1. Fetch current module state
@@ -257,6 +270,17 @@ async function updateModule(id, payload) {
         }
       }
 
+      // AUDIT LOG
+      await log({
+        userId: user.id,
+        action: "UPDATE",
+        module: "PLATFORM_MODULE",
+        entityId: module.id,
+        oldValues: null,
+        newValues: module.toJSON(),
+        description: `Updated module ${module.name}`
+      });
+
       return module;
     } catch (err) {
       if (err.name === "SequelizeUniqueConstraintError") {
@@ -269,7 +293,7 @@ async function updateModule(id, payload) {
 }
 
 /* ---------------- DELETE ---------------- */
-async function deleteModule(id) {
+async function deleteModule(user, id) {
   const module = await getModule(id);
 
   return sequelize.transaction(async (t) => {
@@ -281,6 +305,18 @@ async function deleteModule(id) {
 
     // 3. Hard delete module
     await module.destroy({ transaction: t, force: true }); // <--- FORCE TRUE
+
+
+    // AUDIT LOG
+    await log({
+      userId: user.id,
+      action: "DELETE",
+      module: "PLATFORM_MODULE",
+      entityId: module.id,
+      oldValues: null,
+      newValues: module.toJSON(),
+      description: `Deleted module for ${module.name}`
+    });
 
     return true;
   });

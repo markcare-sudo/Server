@@ -41,6 +41,7 @@ async function listCategories(query = {}) {
 
     const { count, rows } = await Category.findAndCountAll({
         where,
+        attributes: ["id", "name", "slug", "parent_id", "description", "is_active", "created_at", "updated_at"],
         order: [["name", "ASC"]],
         limit: parsedLimit,
         offset,

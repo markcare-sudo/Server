@@ -25,7 +25,17 @@ const Product = sequelize.define("Product", {
     common_specifications: { type: DataTypes.JSONB, defaultValue: {} },
 
     is_active: { type: DataTypes.BOOLEAN, defaultValue: true },
-}, { tableName: "products", timestamps: true, underscored: true });
+}, {
+    tableName: "products",
+    timestamps: true,
+    underscored: true,
+    indexes: [
+        { unique: true, fields: ['slug'] },
+        { fields: ['category_id'] },
+        { fields: ['brand_id'] },
+        { fields: ['is_active'] }
+    ]
+});
 
 /**
  * PRODUCT_VARIANT: The "Child" (Specific Inventory Units)
@@ -35,8 +45,19 @@ const ProductVariant = sequelize.define("ProductVariant", {
     product_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
     sku: { type: DataTypes.STRING(100), unique: true },
 
-    price: { type: DataTypes.DECIMAL(12, 2), allowNull: false },
-    discount_price: { type: DataTypes.DECIMAL(12, 2) },
+    price: {
+        type: DataTypes.DECIMAL(12, 2),
+        allowNull: false,
+        validate: {
+            min: 0.0
+        }
+    },
+    discount_price: {
+        type: DataTypes.DECIMAL(12, 2),
+        validate: {
+            min: 0.0
+        }
+    },
     stock_quantity: { type: DataTypes.INTEGER, defaultValue: 0 },
 
     // Variant specs (e.g., {"color": "Red", "size": "XL", "voltage": "440V"})
@@ -44,7 +65,12 @@ const ProductVariant = sequelize.define("ProductVariant", {
 
     is_default: { type: DataTypes.BOOLEAN, defaultValue: false }
     // NOTE: 'images' JSONB removed here. We use the ProductImage table instead.
-}, { tableName: "product_variants", timestamps: true, underscored: true });
+}, {
+    tableName: "product_variants",
+    timestamps: true,
+    underscored: true,
+    paranoid: true, // <--- Soft Delete
+});
 
 /**
  * PRODUCT_IMAGE: Separate table for SEO and Variant-specific galleries
@@ -58,7 +84,12 @@ const ProductImage = sequelize.define("ProductImage", {
     alt_text: { type: DataTypes.STRING(150), allowNull: true },
     is_primary: { type: DataTypes.BOOLEAN, defaultValue: false },
     sort_order: { type: DataTypes.INTEGER, defaultValue: 0 }
-}, { tableName: "product_images", timestamps: true, underscored: true });
+}, {
+    tableName: "product_images",
+    timestamps: true,
+    underscored: true,
+    paranoid: true, // <--- Soft Delete
+});
 
 // --- ASSOCIATIONS ---
 

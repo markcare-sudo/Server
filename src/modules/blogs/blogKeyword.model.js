@@ -4,15 +4,15 @@ const { sequelize } = require("../../config/db");
 
 const BlogKeyword = sequelize.define("BlogKeyword", {
     id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
-    blog_id: { 
-        type: DataTypes.BIGINT.UNSIGNED, 
-        allowNull: false, 
-        references: { model: "blogs", key: "id" } 
+    blog_id: {
+        type: DataTypes.BIGINT.UNSIGNED,
+        allowNull: false,
+        references: { model: "blogs", key: "id" }
     },
-    keyword_id: { 
-        type: DataTypes.BIGINT.UNSIGNED, 
-        allowNull: false, 
-        references: { model: "keywords", key: "id" } 
+    keyword_id: {
+        type: DataTypes.BIGINT.UNSIGNED,
+        allowNull: false,
+        references: { model: "keywords", key: "id" }
     }
 }, {
     tableName: "blog_keywords",

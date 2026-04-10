@@ -169,7 +169,6 @@ async function verifyOtp({ tenantId = null, requestId, otp, purpose = null }) {
   // if (purpose) where.purpose = purpose;
 
   // Debug line (remove in production)
-  // console.log("DB Lookup where:", where);
 
   const row = await OtpRequest.findOne({ where });
 

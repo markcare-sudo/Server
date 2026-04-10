@@ -11,13 +11,18 @@ const transporter = nodemailer.createTransport({
 });
 
 async function sendMail({ to, subject, html, text }) {
-  return transporter.sendMail({
-    from: process.env.SMTP_FROM,
-    to,
-    subject,
-    text,
-    html,
-  });
+  try {
+    return await transporter.sendMail({
+      from: `"${process.env.APP_NAME || "Mark Care"}" <${process.env.SMTP_USER}>`,
+      to,
+      subject,
+      text: text || "Please view this email in HTML format.",
+      html,
+    });
+  } catch (error) {
+    console.error("Mail Error:", error.message);
+    throw error;
+  }
 }
 
 async function sendEmailVerificationLink({ to, name, labName, verifyUrl }) {
@@ -50,12 +55,7 @@ async function sendEmailVerificationLink({ to, name, labName, verifyUrl }) {
     </div>
   `;
 
-  await transporter.sendMail({
-    from: `"${process.env.APP_NAME}" <${process.env.SMTP_FROM}>`,
-    to,
-    subject,
-    html,
-  });
+  await sendMail({ to, subject, html });
 }
 
 async function sendUserEmailVerificationLink({ to, name, verifyUrl }) {
@@ -88,12 +88,7 @@ async function sendUserEmailVerificationLink({ to, name, verifyUrl }) {
     </div>
   `;
 
-  await transporter.sendMail({
-    from: `"${process.env.APP_NAME}" <${process.env.SMTP_FROM}>`,
-    to,
-    subject,
-    html,
-  });
+  await sendMail({ to, subject, html });
 }
 
 module.exports = { sendMail, sendEmailVerificationLink, sendUserEmailVerificationLink };

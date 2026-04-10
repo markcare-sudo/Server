@@ -4,7 +4,6 @@ const { PlatformModule, PlatformFeature, RolePermission, TenantSubscription, Sub
 
 const getUserMenu = async (user) => {
     const { roleId, tenantId, isSuperAdmin: isPlatformAdmin } = user;
-    console.log("Generating menu for user:", user);
 
     // 1️⃣ Get role permissions
     const permissions = await RolePermission.findAll({

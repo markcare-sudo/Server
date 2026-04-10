@@ -78,6 +78,7 @@ async function update(req, res, next) {
   try {
 
     const user = await UserService.updateUser(
+      req.user,
       req.params.id,
       req.body
     );
@@ -96,7 +97,7 @@ async function update(req, res, next) {
 async function remove(req, res, next) {
   try {
 
-    await UserService.deleteUser(req.params.id);
+    await UserService.deleteUser(req.user, req.params.id);
 
     res.json({
       success: true,
@@ -112,7 +113,7 @@ async function remove(req, res, next) {
 async function restore(req, res, next) {
   try {
 
-    await UserService.restoreUser(req.params.id);
+    await UserService.restoreUser(req.user, req.params.id);
 
     res.json({
       success: true,
@@ -128,7 +129,7 @@ async function restore(req, res, next) {
 async function permanentDelete(req, res, next) {
   try {
 
-    await UserService.permanentDeleteUser(req.params.id);
+    await UserService.permanentDeleteUser(req.user, req.params.id);
 
     res.json({
       success: true,

@@ -12,8 +12,6 @@ function requirePermission(permissionKey) {
         return next(new ApiError(401, "Unauthenticated"));
       }
 
-      console.log(req)
-
       // ✅ 1️⃣ Super Admin Bypass (NO DB HIT)
       if (user.is_super_admin) {
         return next();

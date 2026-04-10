@@ -8,11 +8,10 @@ const RoleService = require("./role.service");
 async function create(req, res, next) {
   try {
 
-    const role = await RoleService.createRole({
-      ...req.body,
-      tenantId: req.user.tenant_id,
-      userId: req.user.id,
-    });
+    const role = await RoleService.createRole(
+      req.user,
+      req.body,
+    );
 
     res.status(201).json({
       success: true,
@@ -31,11 +30,11 @@ async function create(req, res, next) {
 async function update(req, res, next) {
   try {
 
-    const role = await RoleService.updateRole({
-      id: req.params.id,
-      ...req.body,
-      userId: req.user.id,
-    });
+    const role = await RoleService.updateRole(
+      req.user,
+      req.params.id,
+      req.body,
+    );
 
     res.json({
       success: true,
@@ -54,9 +53,10 @@ async function update(req, res, next) {
 async function remove(req, res, next) {
   try {
 
-    await RoleService.deleteRole({
-      id: req.params.id,
-    });
+    await RoleService.deleteRole(
+      req.user,
+      req.params.id,
+    );
 
     res.json({
       success: true,
@@ -75,9 +75,10 @@ async function remove(req, res, next) {
 async function permanentRemove(req, res, next) {
   try {
 
-    await RoleService.permanentDeleteRole({
-      id: req.params.id,
-    });
+    await RoleService.permanentDeleteRole(
+      req.user,
+      req.params.id,
+    );
 
     res.json({
       success: true,
@@ -110,9 +111,7 @@ async function list(req, res, next) {
 async function getOne(req, res, next) {
   try {
 
-    const role = await RoleService.getRole({
-      id: req.params.id,
-    });
+    const role = await RoleService.getRole(req.params.id);
 
     res.json({
       success: true,

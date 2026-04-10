@@ -40,7 +40,7 @@ async function createBulk(req, res, next) {
 /* ---------------- CREATE ---------------- */
 async function create(req, res, next) {
   try {
-    const data = await createFeature(req.body);
+    const data = await createFeature(req.user, req.body);
     return res.status(201).json({ success: true, message: "Feature created successfully", data });
   } catch (e) {
     next(e);
@@ -50,7 +50,7 @@ async function create(req, res, next) {
 /* ---------------- UPDATE ---------------- */
 async function update(req, res, next) {
   try {
-    const data = await updateFeature(req.params.id, req.body);
+    const data = await updateFeature(req.user, req.params.id, req.body);
     return res.json({ success: true, message: "Feature updated successfully", data });
   } catch (e) {
     next(e);
@@ -60,7 +60,7 @@ async function update(req, res, next) {
 /* ---------------- DELETE ---------------- */
 async function remove(req, res, next) {
   try {
-    await deleteFeature(req.params.id);
+    await deleteFeature(req.user, req.params.id);
     return res.json({ success: true, message: "Platform feature deleted" });
   } catch (e) {
     next(e);
