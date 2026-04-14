@@ -10,7 +10,7 @@ router.get("/:id", ServiceController.getDetailsById);
 
 // ADMIN
 router.post("/", authMiddleware, upload.array("images"), ServiceController.create);
-router.patch("/:id", authMiddleware, upload.array("images"), ServiceController.update);
+router.put("/:id", authMiddleware, upload.array("images"), ServiceController.update);
 router.delete("/:id", authMiddleware, ServiceController.remove);
 
 module.exports = router;

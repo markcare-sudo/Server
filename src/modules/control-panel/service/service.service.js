@@ -83,7 +83,13 @@ async function listServices(query = {}) {
         limit: parsedLimit,
         offset,
         distinct: true,
+        attributes: ["id", "name", "slug", "description", "base_price", "discount_price", "type", "estimated_duration_mins", "category_id", "is_active", "created_at", "updated_at"],
         include: [
+            {
+                model: Category,
+                as: "category",
+                attributes: ["id", "name"]
+            },
             { model: ServiceBenefit, as: "benefits", required: false },
             { model: MaintenanceSchedule, as: "schedule", required: false },
             { model: ServiceImage, as: "images" }
