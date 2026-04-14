@@ -19,7 +19,6 @@ const Product = sequelize.define("Product", {
     name: { type: DataTypes.STRING(255), allowNull: false },
     slug: { type: DataTypes.STRING(255), allowNull: false, unique: true },
     description: { type: DataTypes.TEXT },
-    type: { type: DataTypes.ENUM("PRODUCT", "SERVICE"), defaultValue: "PRODUCT" },
 
     // Flexible specs (e.g., Material, Country of Origin)
     common_specifications: { type: DataTypes.JSONB, defaultValue: {} },

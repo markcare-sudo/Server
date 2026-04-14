@@ -1,28 +1,17 @@
 const router = require("express").Router();
 const authMiddleware = require("../../../middlewares/auth.middleware");
-const upload = require("../../../utils/multerConfig");
+// const upload = require("../../../utils/multerConfig");
+const upload = require("../../../middlewares/upload.middleware");
 const ProductController = require("./product.controller");
-// const upload = require("../../../core/utils/multerConfig"); // Ensure you have a multer config
 
-// Customer Routes
+// PUBLIC
 router.get("/", ProductController.list);
-router.get("/:slug", ProductController.getDetails);
+router.get("/details/:slug", ProductController.getDetails);
+router.get("/:id", ProductController.getDetailsById);
 
-// Admin Routes
-router.post(
-    "/",
-    authMiddleware,
-    upload.any(), // <--- CRITICAL: Parses the FormData and files
-    ProductController.create
-);
-
-router.patch(
-    "/:id",
-    authMiddleware,
-    upload.any(), // <--- CRITICAL: For updates with new images
-    ProductController.update
-);
-
+// ADMIN
+router.post("/", authMiddleware, upload.any(), ProductController.create);
+router.put("/:id", authMiddleware, upload.any(), ProductController.update);
 router.delete("/:id", authMiddleware, ProductController.remove);
 
 module.exports = router;

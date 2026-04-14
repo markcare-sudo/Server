@@ -165,7 +165,7 @@ async function bulkCreateFeatures(payload) {
 }
 
 /* ---------------- CREATE FEATURE ---------------- */
-async function createFeature(payload) {
+async function createFeature(user, payload) {
   let { name, module_id } = payload;
 
   if (!name || !module_id)
@@ -224,7 +224,7 @@ async function createFeature(payload) {
 }
 
 /* ---------------- UPDATE FEATURE ---------------- */
-async function updateFeature(id, payload) {
+async function updateFeature(user, id, payload) {
 
   const feature = await getFeature(id);
 

@@ -34,6 +34,7 @@ require("../modules/control-panel/ima/audit-logs/audit-log.model");
 require("../modules/control-panel/brands/brand.model");
 require("../modules/control-panel/categories/category.model");
 require("../modules/control-panel/products/product.model");
+require("../modules/control-panel/service/service.model");
 
 /* =========================================================
    INITIALIZE ALL LINKS

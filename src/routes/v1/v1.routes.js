@@ -27,6 +27,7 @@ router.use("/audit-logs", require("../../modules/control-panel/ima/audit-logs/au
 router.use("/catalog/brands", require("../../modules/control-panel/brands/brand.routes"));
 router.use("/catalog/categories", require("../../modules/control-panel/categories/category.routes"));
 router.use("/catalog/products", require("../../modules/control-panel/products/product.routes"));
+router.use("/catalog/services", require("../../modules/control-panel/service/service.routes"));
 
 // BLOGS MODULE ROUTES
 router.use("/blogs", require("../../modules/blogs/blog.routes"));

@@ -1,7 +1,10 @@
 const { Blog } = require("../modules/blogs/blog.model");
+const { Category } = require("../modules/control-panel/categories/category.model");
 const AuditLog = require("../modules/control-panel/ima/audit-logs/audit-log.model");
 const PlatformFeature = require("../modules/control-panel/ima/platformFeatures/platformFeature.model");
 const PlatformModule = require("../modules/control-panel/ima/platformModules/platformModule.model");
+const { Product } = require("../modules/control-panel/products/product.model");
+const { Service } = require("../modules/control-panel/service/service.model");
 const { Keyword } = require("../modules/keywords/keyword.model");
 const { Tag } = require("../modules/tags/tag.model");
 
@@ -34,6 +37,23 @@ module.exports = () => {
 
    PlatformModule.hasMany(PlatformFeature, { foreignKey: "module_id", as: "features", onDelete: "CASCADE", onUpdate: "CASCADE" });
    PlatformFeature.belongsTo(PlatformModule, { foreignKey: "module_id", as: "module" });
+
+
+   /* =========================================================
+   CATEGORY ↔ SERVICE
+   ========================================================= */
+
+   Category.hasMany(Service, { foreignKey: "category_id", as: "services", onDelete: "CASCADE", onUpdate: "CASCADE" });
+   Service.belongsTo(Category, { foreignKey: "category_id", as: "category" });
+
+
+   /* =========================================================
+   CATEGORY ↔ PRODUCT
+   ========================================================= */
+
+   Category.hasMany(Product, { foreignKey: "category_id", as: "products", onDelete: "CASCADE", onUpdate: "CASCADE" });
+   Product.belongsTo(Category, { foreignKey: "category_id", as: "category" });
+
 
    /* =========================================================
    MODULE ↔ PERMISSIONS
