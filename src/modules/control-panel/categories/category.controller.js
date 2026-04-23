@@ -12,6 +12,12 @@ const create = asyncHandler(async (req, res) => {
     return created(res, category);
 });
 
+const getById = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const category = await CategoryService.getCategoryById(id);
+    return ok(res, category);
+});
+
 const update = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const category = await CategoryService.updateCategory(id, req.body);
@@ -24,4 +30,4 @@ const remove = asyncHandler(async (req, res) => {
     return ok(res, { message: "Category deleted successfully" });
 });
 
-module.exports = { list, create, update, remove };
+module.exports = { list, getById, create, update, remove };

@@ -6,23 +6,12 @@ const CategoryController = require("./category.controller");
 router.get("/", CategoryController.list);
 
 // Admin Protected Routes
-router.post(
-    "/",
-    authMiddleware,
-    // requirePermission("CATALOG.MANAGE"), 
-    CategoryController.create
-);
+router.post("/", authMiddleware, CategoryController.create);
 
-router.patch(
-    "/:id",
-    authMiddleware,
-    CategoryController.update
-);
+router.get("/:id", authMiddleware, CategoryController.getById);
 
-router.delete(
-    "/:id",
-    authMiddleware,
-    CategoryController.remove
-);
+router.put("/:id", authMiddleware, CategoryController.update);
+
+router.delete("/:id", authMiddleware, CategoryController.remove);
 
 module.exports = router;

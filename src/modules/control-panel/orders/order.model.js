@@ -2,9 +2,9 @@ const { DataTypes } = require("sequelize");
 const { sequelize } = require("../../config/db");
 
 const Order = sequelize.define("Order", {
-    id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
-    user_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
-    address_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+    id: { type: DataTypes.BIGINT, autoIncrement: true, primaryKey: true },
+    user_id: { type: DataTypes.BIGINT, allowNull: false },
+    address_id: { type: DataTypes.BIGINT, allowNull: false },
 
     total_amount: { type: DataTypes.DECIMAL(12, 2), allowNull: false },
     order_status: {
@@ -17,10 +17,10 @@ const Order = sequelize.define("Order", {
 }, { tableName: "orders", timestamps: true, underscored: true });
 
 const OrderItem = sequelize.define("OrderItem", {
-    id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
-    order_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
-    product_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
-    variant_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false }, // Specific item bought
+    id: { type: DataTypes.BIGINT, autoIncrement: true, primaryKey: true },
+    order_id: { type: DataTypes.BIGINT, allowNull: false },
+    product_id: { type: DataTypes.BIGINT, allowNull: false },
+    variant_id: { type: DataTypes.BIGINT, allowNull: false }, // Specific item bought
 
     quantity: { type: DataTypes.INTEGER, allowNull: false },
     unit_price: { type: DataTypes.DECIMAL(12, 2), allowNull: false }, // Price at time of purchase

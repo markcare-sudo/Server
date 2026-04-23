@@ -5,14 +5,14 @@ const { sequelize } = require("../../../../config/db");
 const Permission = sequelize.define(
   "Permission",
   {
-    id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
+    id: { type: DataTypes.BIGINT, autoIncrement: true, primaryKey: true },
     code: {
       type: DataTypes.STRING(150),
       allowNull: false,
       unique: true,
     },
     module_id: {
-      type: DataTypes.BIGINT.UNSIGNED,
+      type: DataTypes.BIGINT,
       allowNull: false,
       references: {
         model: "platform_modules",
@@ -20,7 +20,7 @@ const Permission = sequelize.define(
       },
     },
     feature_id: {
-      type: DataTypes.BIGINT.UNSIGNED,
+      type: DataTypes.BIGINT,
       allowNull: true, // allow module-level permissions
       references: {
         model: "platform_features",

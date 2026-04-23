@@ -2,7 +2,7 @@ const { DataTypes } = require("sequelize");
 const { sequelize } = require("../../../config/db");
 
 const Brand = sequelize.define("Brand", {
-    id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
+    id: { type: DataTypes.BIGINT, autoIncrement: true, primaryKey: true },
     name: { type: DataTypes.STRING(100), allowNull: false, unique: true },
     slug: { type: DataTypes.STRING(100), allowNull: false, unique: true },
     image_url: { type: DataTypes.STRING(255) },

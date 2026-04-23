@@ -59,6 +59,15 @@ async function listCategories(query = {}) {
 }
 
 /**
+ * Get category by ID
+ */
+async function getCategoryById(id) {
+    const category = await Category.findByPk(id);
+    if (!category) throw new ApiError(404, "Category not found");
+    return category;
+}
+
+/**
  * Update Category
  */
 async function updateCategory(id, data) {
@@ -86,4 +95,4 @@ async function deleteCategory(id) {
     return category.destroy();
 }
 
-module.exports = { createCategory, listCategories, updateCategory, deleteCategory };
+module.exports = { createCategory, listCategories, getCategoryById, updateCategory, deleteCategory };

@@ -77,12 +77,12 @@ async function listProducts(query = {}) {
         limit: parsedLimit,
         offset,
         distinct: true,
-        attributes: ["id", "name", "slug", "description", "base_price", "discount_price", "category_id", "brand_id", "is_active", "created_at", "updated_at"],
+        attributes: ["id", "name", "slug", "description", "category_id", "brand_id", "is_active", "created_at", "updated_at"],
         include: [
             { model: Category, as: "category", attributes: ["id", "name", "slug"] },
             { model: Brand, as: "brand", attributes: ["id", "name", "image_url"] },
             { model: ProductImage, as: "images", where: { is_primary: true }, required: false },
-            { model: ProductVariant, as: "variants", where: { is_default: true }, required: false }
+            { model: ProductVariant, as: "variants", required: false }
         ],
         order: [["created_at", "DESC"]]
     });

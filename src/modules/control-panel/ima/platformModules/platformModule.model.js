@@ -2,7 +2,7 @@ const { DataTypes } = require("sequelize");
 const { sequelize } = require("../../../../config/db");
 
 const PlatformModule = sequelize.define("platform_modules", {
-  id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
+  id: { type: DataTypes.BIGINT, autoIncrement: true, primaryKey: true },
 
   code: { type: DataTypes.STRING(100), allowNull: false, unique: true }, // BILLING, REPORTS, PATIENTS
   name: { type: DataTypes.STRING(150), allowNull: false, },
@@ -11,8 +11,8 @@ const PlatformModule = sequelize.define("platform_modules", {
 
   has_features: { type: DataTypes.BOOLEAN, defaultValue: true },
 
-  created_by: { type: DataTypes.BIGINT.UNSIGNED, allowNull: true },
-  updated_by: { type: DataTypes.BIGINT.UNSIGNED, allowNull: true },
+  created_by: { type: DataTypes.BIGINT, allowNull: true },
+  updated_by: { type: DataTypes.BIGINT, allowNull: true },
 
   sort_order: { type: DataTypes.INTEGER, defaultValue: 0 },
   is_active: { type: DataTypes.BOOLEAN, defaultValue: true },

@@ -7,18 +7,19 @@ const BlogTag = sequelize.define(
   "BlogTag",
   {
     id: {
-      type: DataTypes.BIGINT.UNSIGNED,
+      type: DataTypes.BIGINT,
       autoIncrement: true,
       primaryKey: true,
     },
 
-    blog_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false, references: { model: "blogs", key: "id" },
+    blog_id: {
+      type: DataTypes.BIGINT, allowNull: false, references: { model: "blogs", key: "id" },
       onDelete: "CASCADE",
       onUpdate: "CASCADE",
     },
 
     tag_id: {
-      type: DataTypes.BIGINT.UNSIGNED,
+      type: DataTypes.BIGINT,
       allowNull: false,
       references: {
         model: "tags",

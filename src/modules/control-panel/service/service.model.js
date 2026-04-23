@@ -5,9 +5,9 @@ const { sequelize } = require("../../../config/db");
  * SERVICE: The core Labor-based offering
  */
 const Service = sequelize.define("Service", {
-    id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
+    id: { type: DataTypes.BIGINT, autoIncrement: true, primaryKey: true },
 
-    category_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+    category_id: { type: DataTypes.BIGINT, allowNull: false },
 
     name: { type: DataTypes.STRING(255), allowNull: false },
     slug: { type: DataTypes.STRING(255), allowNull: false, unique: true },
@@ -37,8 +37,8 @@ const Service = sequelize.define("Service", {
  * SERVICE BENEFITS
  */
 const ServiceBenefit = sequelize.define("ServiceBenefit", {
-    id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
-    service_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+    id: { type: DataTypes.BIGINT, autoIncrement: true, primaryKey: true },
+    service_id: { type: DataTypes.BIGINT, allowNull: false },
     benefit_text: { type: DataTypes.STRING(255), allowNull: false },
     is_included: { type: DataTypes.BOOLEAN, defaultValue: true }
 
@@ -53,9 +53,9 @@ const ServiceBenefit = sequelize.define("ServiceBenefit", {
  * MAINTENANCE SCHEDULE
  */
 const MaintenanceSchedule = sequelize.define("MaintenanceSchedule", {
-    id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
+    id: { type: DataTypes.BIGINT, autoIncrement: true, primaryKey: true },
 
-    service_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+    service_id: { type: DataTypes.BIGINT, allowNull: false },
     total_visits: { type: DataTypes.INTEGER, defaultValue: 1 },
     frequency_months: { type: DataTypes.INTEGER, defaultValue: 0 },
     contract_duration_months: { type: DataTypes.INTEGER, defaultValue: 12 }
@@ -71,8 +71,8 @@ const MaintenanceSchedule = sequelize.define("MaintenanceSchedule", {
  * SERVICE IMAGES (NEW)
  */
 const ServiceImage = sequelize.define("ServiceImage", {
-    id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
-    service_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+    id: { type: DataTypes.BIGINT, autoIncrement: true, primaryKey: true },
+    service_id: { type: DataTypes.BIGINT, allowNull: false },
     image_url: { type: DataTypes.STRING(500), allowNull: false },
     is_primary: { type: DataTypes.BOOLEAN, defaultValue: false },
     sort_order: { type: DataTypes.INTEGER, defaultValue: 0 }

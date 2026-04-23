@@ -6,12 +6,12 @@ const { Brand } = require("../brands/brand.model");
  * PRODUCT: The "Parent" (The Base Catalog Entry)
  */
 const Product = sequelize.define("Product", {
-    id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
-    category_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+    id: { type: DataTypes.BIGINT, autoIncrement: true, primaryKey: true },
+    category_id: { type: DataTypes.BIGINT, allowNull: false },
 
     // BRAND LINK: Replaces the 'brand' string for consistency and filtering
     brand_id: {
-        type: DataTypes.BIGINT.UNSIGNED,
+        type: DataTypes.BIGINT,
         allowNull: true,
         references: { model: 'brands', key: 'id' }
     },
@@ -40,23 +40,12 @@ const Product = sequelize.define("Product", {
  * PRODUCT_VARIANT: The "Child" (Specific Inventory Units)
  */
 const ProductVariant = sequelize.define("ProductVariant", {
-    id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
-    product_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+    id: { type: DataTypes.BIGINT, autoIncrement: true, primaryKey: true },
+    product_id: { type: DataTypes.BIGINT, allowNull: false },
     sku: { type: DataTypes.STRING(100), unique: true },
 
-    price: {
-        type: DataTypes.DECIMAL(12, 2),
-        allowNull: false,
-        validate: {
-            min: 0.0
-        }
-    },
-    discount_price: {
-        type: DataTypes.DECIMAL(12, 2),
-        validate: {
-            min: 0.0
-        }
-    },
+    price: { type: DataTypes.DECIMAL(12, 2), allowNull: false, validate: { min: 0.0 } },
+    discount_price: { type: DataTypes.DECIMAL(12, 2), validate: { min: 0.0 } },
     stock_quantity: { type: DataTypes.INTEGER, defaultValue: 0 },
 
     // Variant specs (e.g., {"color": "Red", "size": "XL", "voltage": "440V"})
@@ -75,9 +64,9 @@ const ProductVariant = sequelize.define("ProductVariant", {
  * PRODUCT_IMAGE: Separate table for SEO and Variant-specific galleries
  */
 const ProductImage = sequelize.define("ProductImage", {
-    id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
-    product_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
-    variant_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: true }, // Links image to a specific color/model
+    id: { type: DataTypes.BIGINT, autoIncrement: true, primaryKey: true },
+    product_id: { type: DataTypes.BIGINT, allowNull: false },
+    variant_id: { type: DataTypes.BIGINT, allowNull: true }, // Links image to a specific color/model
 
     url: { type: DataTypes.STRING(255), allowNull: false },
     alt_text: { type: DataTypes.STRING(150), allowNull: true },

@@ -4,11 +4,11 @@ const { sequelize } = require("../../../config/db");
 const OtpRequest = sequelize.define(
   "otp_requests",
   {
-    id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
+    id: { type: DataTypes.BIGINT, autoIncrement: true, primaryKey: true },
 
     // Nullable before user/tenant creation
-    tenant_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: true },
-    user_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: true },
+    tenant_id: { type: DataTypes.BIGINT, allowNull: true },
+    user_id: { type: DataTypes.BIGINT, allowNull: true },
 
     // EMAIL | SMS
     channel: { type: DataTypes.ENUM("EMAIL", "SMS"), allowNull: false },

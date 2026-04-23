@@ -1,9 +1,10 @@
 const { Blog } = require("../modules/blogs/blog.model");
+const { Cart, CartItem } = require("../modules/control-panel/cart/cart.model");
 const { Category } = require("../modules/control-panel/categories/category.model");
 const AuditLog = require("../modules/control-panel/ima/audit-logs/audit-log.model");
 const PlatformFeature = require("../modules/control-panel/ima/platformFeatures/platformFeature.model");
 const PlatformModule = require("../modules/control-panel/ima/platformModules/platformModule.model");
-const { Product } = require("../modules/control-panel/products/product.model");
+const { Product, ProductVariant } = require("../modules/control-panel/products/product.model");
 const { Service } = require("../modules/control-panel/service/service.model");
 const { Keyword } = require("../modules/keywords/keyword.model");
 const { Tag } = require("../modules/tags/tag.model");
@@ -53,6 +54,21 @@ module.exports = () => {
 
    Category.hasMany(Product, { foreignKey: "category_id", as: "products", onDelete: "CASCADE", onUpdate: "CASCADE" });
    Product.belongsTo(Category, { foreignKey: "category_id", as: "category" });
+
+
+   /* =========================================================
+   CART ↔ CART ITEM
+   ========================================================= */
+
+   Cart.hasMany(CartItem, { foreignKey: "cart_id", as: "cate_items", onDelete: "CASCADE", onUpdate: "CASCADE" });
+   CartItem.belongsTo(Cart, { foreignKey: "cart_id", as: "cart" });
+
+   /* =========================================================
+   CART ITEM ↔ PRODUCT VARIANT
+   ========================================================= */
+
+   CartItem.belongsTo(ProductVariant, { foreignKey: "product_variant_id", as: "variant", onDelete: "CASCADE", onUpdate: "CASCADE" });
+   ProductVariant.hasMany(CartItem, { foreignKey: "product_variant_id", onDelete: "CASCADE", onUpdate: "CASCADE" });
 
 
    /* =========================================================

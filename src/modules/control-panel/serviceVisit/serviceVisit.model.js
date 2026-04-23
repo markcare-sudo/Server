@@ -6,15 +6,15 @@ const { sequelize } = require("../../../config/db");
  * Linked to either a one-time Order or a recurring Subscription
  */
 const ServiceVisit = sequelize.define("ServiceVisit", {
-    id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
+    id: { type: DataTypes.BIGINT, autoIncrement: true, primaryKey: true },
 
     // Links (Polymorphic-like behavior)
-    subscription_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: true }, // For AMC/OMC
-    order_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: true },        // For one-time repairs
+    subscription_id: { type: DataTypes.BIGINT, allowNull: true }, // For AMC/OMC
+    order_id: { type: DataTypes.BIGINT, allowNull: true },        // For one-time repairs
 
-    technician_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: true },
-    user_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false }, // Customer
-    address_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+    technician_id: { type: DataTypes.BIGINT, allowNull: true },
+    user_id: { type: DataTypes.BIGINT, allowNull: false }, // Customer
+    address_id: { type: DataTypes.BIGINT, allowNull: false },
 
     scheduled_date: { type: DataTypes.DATEONLY, allowNull: false },
     scheduled_slot: { type: DataTypes.STRING(50) }, // e.g., "10:00 AM - 01:00 PM"

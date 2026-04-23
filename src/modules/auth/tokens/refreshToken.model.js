@@ -4,9 +4,9 @@ const { sequelize } = require("../../../config/db");
 const RefreshToken = sequelize.define(
   "refresh_tokens",
   {
-    id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
+    id: { type: DataTypes.BIGINT, autoIncrement: true, primaryKey: true },
 
-    user_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+    user_id: { type: DataTypes.BIGINT, allowNull: false },
 
     token_hash: { type: DataTypes.STRING(255), allowNull: false },
 

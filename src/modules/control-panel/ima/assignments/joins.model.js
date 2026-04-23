@@ -14,10 +14,10 @@ const { Permission: P } = require("../permissions/permission.model");
 const UserRole = sequelize.define(
   "UserRole",
   {
-    id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
+    id: { type: DataTypes.BIGINT, autoIncrement: true, primaryKey: true },
 
-    user_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
-    role_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+    user_id: { type: DataTypes.BIGINT, allowNull: false },
+    role_id: { type: DataTypes.BIGINT, allowNull: false },
 
     isActive: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
   },
@@ -40,10 +40,10 @@ const UserRole = sequelize.define(
 const RolePermission = sequelize.define(
   "RolePermission",
   {
-    id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
+    id: { type: DataTypes.BIGINT, autoIncrement: true, primaryKey: true },
 
-    role_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
-    permission_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+    role_id: { type: DataTypes.BIGINT, allowNull: false },
+    permission_id: { type: DataTypes.BIGINT, allowNull: false },
 
     isActive: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
   },

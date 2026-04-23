@@ -1,7 +1,7 @@
 const { Op } = require("sequelize");
 const { Product, ProductVariant, ProductImage } = require("../products/product.model");
 const { Brand } = require("../brands/brand.model");
-const { Service, ServiceImage } = require("../service/service.model");
+const { Service, ServiceImage, ServiceBenefit, MaintenanceSchedule } = require("../service/service.model");
 const { Category } = require("../categories/category.model");
 
 /**
@@ -20,77 +20,106 @@ async function getCatalog(query = {}) {
     // ---------------- PRODUCTS ----------------
     const products = await Product.findAll({
         where: { is_active: true, ...searchCondition },
-        attributes: ["id", "name", "slug", "description", "created_at"],
         include: [
-            { model: Category, as: "category", attributes: ["name"] },
-            { model: Brand, as: "brand", attributes: ["name"] },
+            { model: Category, as: "category" },
+            { model: Brand, as: "brand" },
             {
                 model: ProductImage,
                 as: "images",
-                where: { is_primary: true },
-                required: false,
-                attributes: ["url"]
+                attributes: ["id", "url", "is_primary", "sort_order"]
             },
             {
                 model: ProductVariant,
                 as: "variants",
-                where: { is_default: true },
-                required: false,
-                attributes: ["price", "discount_price"]
+                include: [
+                    {
+                        model: ProductImage,
+                        as: "variant_images",
+                        attributes: ["id", "url"]
+                    }
+                ]
             }
-        ]
+        ],
+        order: [["created_at", "DESC"]]
     });
 
     // ---------------- SERVICES ----------------
     const services = await Service.findAll({
         where: { is_active: true, ...searchCondition },
-        attributes: ["id", "name", "slug", "description", "base_price", "discount_price", "type", "created_at"],
         include: [
-            { model: Category, as: "category", attributes: ["name"] },
+            { model: Category, as: "category" },
+            { model: ServiceBenefit, as: "benefits" },
+            { model: MaintenanceSchedule, as: "schedule" },
             {
                 model: ServiceImage,
                 as: "images",
-                attributes: ["image_url"]
+                attributes: ["id", "image_url", "is_primary"]
             }
-        ]
+        ],
+        order: [["created_at", "DESC"]]
     });
 
-    // ---------------- FORMAT RESPONSE ----------------
+    // ---------------- FORMAT PRODUCTS ----------------
     const formattedProducts = products.map(p => ({
         id: p.id,
+        type: "PRODUCT",
+
         name: p.name,
         slug: p.slug,
         description: p.description,
-        type: "PRODUCT",
-        category: p.category?.name,
-        brand: p.brand?.name,
-        image: p.images?.[0]?.url || null,
-        price: p.variants?.[0]?.price || 0,
-        discount_price: p.variants?.[0]?.discount_price || null,
+
+        category: p.category,
+        brand: p.brand,
+
+        specifications: p.common_specifications,
+
+        images: p.images,
+        variants: p.variants,
+
+        // quick access fields
+        price: p.variants?.find(v => v.is_default)?.price || 0,
+        discount_price: p.variants?.find(v => v.is_default)?.discount_price || null,
+
         created_at: p.created_at
     }));
 
+    // ---------------- FORMAT SERVICES ----------------
     const formattedServices = services.map(s => ({
         id: s.id,
+        type: "SERVICE",
+
         name: s.name,
         slug: s.slug,
         description: s.description,
-        type: "SERVICE",
-        category: s.category?.name,
-        image: s.images?.[0]?.url || null,
+
+        category: s.category,
+
+        service_type: s.type,
+        duration: s.estimated_duration_mins,
+        skill_level: s.required_skill_level,
+
         price: s.base_price,
         discount_price: s.discount_price,
-        service_type: s.type,
+
+        is_spares_included: s.is_spares_included,
+
+        benefits: s.benefits,
+        schedule: s.schedule,
+
+        images: s.images,
+
+        meta_data: s.meta_data,
+
         created_at: s.created_at
     }));
 
-    // ---------------- MERGE + SORT ----------------
+    // ---------------- MERGE ----------------
     let combined = [...formattedProducts, ...formattedServices];
 
-    // sort latest first
+    // ---------------- SORT ----------------
     combined.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-    // pagination (manual since merged)
+    // ---------------- PAGINATION ----------------
     const paginated = combined.slice(offset, offset + parsedLimit);
 
     return {

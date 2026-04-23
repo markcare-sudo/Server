@@ -6,7 +6,7 @@ const { sequelize } = require("../../config/db");
 const CallbackRequest = sequelize.define(
   "CallbackRequest",
   {
-    id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
+    id: { type: DataTypes.BIGINT, autoIncrement: true, primaryKey: true },
     product_name: { type: DataTypes.STRING(200), allowNull: true },
     product_price: { type: DataTypes.DECIMAL(12, 2), allowNull: true },
     phone: { type: DataTypes.STRING(20), allowNull: false },

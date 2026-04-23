@@ -5,9 +5,9 @@ const { sequelize } = require("../../../config/db");
 const Master = sequelize.define(
   "Master",
   {
-    id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
+    id: { type: DataTypes.BIGINT, autoIncrement: true, primaryKey: true },
 
-    tenantId: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+    tenantId: { type: DataTypes.BIGINT, allowNull: false },
 
     // e.g. "DEPARTMENT", "TEST_CATEGORY", "SAMPLE_TYPE"
     type: { type: DataTypes.STRING(60), allowNull: false },
@@ -24,7 +24,7 @@ const Master = sequelize.define(
     isActive: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
 
     deletedAt: { type: DataTypes.DATE, allowNull: true },
-    deletedBy: { type: DataTypes.BIGINT.UNSIGNED, allowNull: true },
+    deletedBy: { type: DataTypes.BIGINT, allowNull: true },
   },
   {
     tableName: "masters",

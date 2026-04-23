@@ -35,6 +35,8 @@ require("../modules/control-panel/brands/brand.model");
 require("../modules/control-panel/categories/category.model");
 require("../modules/control-panel/products/product.model");
 require("../modules/control-panel/service/service.model");
+require("../modules/control-panel/cart/cart.model");
+require("../modules/control-panel/wishlist/wishlist.model");
 
 /* =========================================================
    INITIALIZE ALL LINKS
