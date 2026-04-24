@@ -1,6 +1,7 @@
 const { Wishlist, WishlistItem } = require("./wishlist.model");
-const { ProductVariant } = require("../products/product.model");
+const { ProductVariant, Product, ProductImage } = require("../products/product.model");
 const ApiError = require("../../../core/errors/ApiError");
+const { Brand } = require("../brands/brand.model");
 
 /**
  * GET OR CREATE
@@ -68,7 +69,28 @@ async function getWishlist(user_id) {
                 include: [
                     {
                         model: ProductVariant,
-                        include: ["product"],
+                        as: "variant",
+                        include: [
+                            {
+                                model: Product,
+                                as: "product",
+                                include: [
+                                    {
+                                        model: ProductImage,
+                                        as: "images", // Matches: Product.hasMany(ProductImage, { as: "images" })
+                                    },
+                                    {
+                                        model: Brand,
+                                        as: "brand", // Good to have for the Wishlist UI
+                                    }
+                                ],
+                            },
+                            // Optional: Include variant-specific images if they exist
+                            {
+                                model: ProductImage,
+                                as: "variant_images",
+                            }
+                        ],
                     },
                 ],
             },

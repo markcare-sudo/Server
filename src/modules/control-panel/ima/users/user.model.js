@@ -10,7 +10,7 @@ const User = sequelize.define(
     name: { type: DataTypes.STRING(120), allowNull: false },
     email: { type: DataTypes.STRING(190), allowNull: false },
     phone: { type: DataTypes.STRING(20), allowNull: true },
-    user_type: { type: DataTypes.ENUM("PLATFORM", "TENANT"), allowNull: false, defaultValue: "TENANT" },
+    user_type: { type: DataTypes.ENUM("PLATFORM", "CUSTOMER", "TECHNICIAN"), allowNull: false, defaultValue: "CUSTOMER" },
     password_hash: { type: DataTypes.STRING(255), allowNull: true },
     is_super_admin: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
 

@@ -79,19 +79,4 @@ const ProductImage = sequelize.define("ProductImage", {
     paranoid: true, // <--- Soft Delete
 });
 
-// --- ASSOCIATIONS ---
-
-// Product <-> Brand
-Brand.hasMany(Product, { foreignKey: "brand_id", as: "products" });
-Product.belongsTo(Brand, { foreignKey: "brand_id", as: "brand" });
-
-// Product <-> Variants
-Product.hasMany(ProductVariant, { as: "variants", foreignKey: "product_id", onDelete: 'CASCADE' });
-ProductVariant.belongsTo(Product, { foreignKey: "product_id" });
-
-// Product/Variant <-> Images
-Product.hasMany(ProductImage, { as: "images", foreignKey: "product_id", onDelete: 'CASCADE' });
-ProductVariant.hasMany(ProductImage, { as: "variant_images", foreignKey: "variant_id", onDelete: 'CASCADE' });
-ProductImage.belongsTo(Product, { foreignKey: "product_id" });
-
 module.exports = { Product, ProductVariant, ProductImage };
