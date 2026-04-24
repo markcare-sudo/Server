@@ -1,7 +1,10 @@
 const { Cart, CartItem } = require("./cart.model");
-const { ProductVariant } = require("../products/product.model");
+const { ProductVariant, Product, ProductImage } = require("../products/product.model");
 const { sequelize } = require("../../../config/db");
 const ApiError = require("../../../core/errors/ApiError");
+const { Brand } = require("../brands/brand.model");
+
+
 
 /**
  * GET OR CREATE CART
@@ -22,21 +25,18 @@ async function getOrCreateCart(user_id, session_id = null) {
 async function addToCart(user_id, { product_variant_id, quantity = 1 }) {
     return await sequelize.transaction(async (t) => {
 
-        const cart = await getOrCreateCart(user_id);
+        const cart = await getOrCreateCart(user_id, null, t);
 
-        // 🔒 Lock cart row
-        await Cart.findByPk(cart.id, { transaction: t, lock: t.LOCK.UPDATE });
+        // 2. Validate the specific variant
+        const variant = await ProductVariant.findByPk(product_variant_id, {
+            transaction: t,
+            lock: t.LOCK.SHARE
+        });
 
-        // ✅ Validate variant
-        const variant = await ProductVariant.findByPk(product_variant_id, { transaction: t });
-        if (!variant) throw new ApiError(404, "Variant not found");
+        if (!variant) throw new ApiError(404, "Product variant not found");
+        if (variant.stock_quantity < quantity) throw new ApiError(400, "Insufficient stock");
 
-        if (variant.stock_quantity < quantity) {
-            throw new ApiError(400, "Insufficient stock");
-        }
-
-        const price = variant.discount_price || variant.price;
-
+        // 3. Handle the Cart Item (Find existing or Create new)
         let item = await CartItem.findOne({
             where: { cart_id: cart.id, product_variant_id },
             transaction: t
@@ -53,9 +53,38 @@ async function addToCart(user_id, { product_variant_id, quantity = 1 }) {
             }, { transaction: t });
         }
 
+        // 4. Recalculate totals (Make sure this helper uses 'as: "variant"')
         await recalculateCart(cart.id, t);
 
-        return item;
+        // 5. Final Fetch with correct Aliasing and Images
+        const freshItem = await CartItem.findByPk(item.id, {
+            transaction: t,
+            include: [{
+                model: ProductVariant,
+                as: "variant", // 🔥 Matches your association alias
+                include: [{
+                    model: Product,
+                    as: "product",
+                    include: [
+                        { model: ProductImage, as: "images" }, // ✅ Added images
+                        { model: Brand, as: "brand" }         // ✅ Added brand
+                    ]
+                }]
+            }]
+        });
+
+        // 6. Restructure for Frontend
+        const itemJson = freshItem.get({ plain: true });
+        const { variant: vData, ...itemRest } = itemJson;
+        const { product: pData, ...vRest } = vData;
+
+        return {
+            ...itemRest,
+            product: {
+                ...pData,
+                selected_variant: vRest // Variant is now nested inside Product
+            }
+        };
     });
 }
 
@@ -113,25 +142,70 @@ async function removeCartItem(user_id, item_id) {
 /**
  * GET CART DETAILS
  */
-async function getCart(user_id) {
+const getCart = async (user_id) => {
+    // 1. Fetch data using the exact aliases defined in your associations
     const cart = await Cart.findOne({
         where: { user_id },
         include: [
             {
                 model: CartItem,
-                as: "items",
+                as: "items", // Matches: Cart.hasMany(CartItem, { as: "items" })
                 include: [
                     {
                         model: ProductVariant,
-                        include: ["product"]
+                        as: "variant", // Matches: CartItem.belongsTo(ProductVariant, { as: "variant" })
+                        include: [
+                            {
+                                model: Product,
+                                as: "product", // Matches: ProductVariant.belongsTo(Product, { as: "product" })
+                                include: [
+                                    {
+                                        model: ProductImage,
+                                        as: "images", // Matches: Product.hasMany(ProductImage, { as: "images" })
+                                        attributes: ["id", "url", "is_primary"]
+                                    },
+                                    {
+                                        model: Brand,
+                                        as: "brand",
+                                        attributes: ["id", "name"]
+                                    }
+                                ]
+                            }
+                        ]
                     }
                 ]
             }
-        ]
+        ],
+        order: [[{ model: CartItem, as: "items" }, "created_at", "DESC"]]
     });
 
-    return cart;
-}
+    if (!cart) return null;
+
+    // 2. Transform the Sequelize instance to a plain JSON object
+    const cartJson = cart.get({ plain: true });
+
+    // 3. Restructure: Move "variant" inside "product" for each item
+    cartJson.items = cartJson.items.map((item) => {
+        // Use destructuring to pull the original objects apart
+        const { variant, ...itemData } = item;
+
+        if (variant && variant.product) {
+            const { product, ...variantData } = variant;
+
+            return {
+                ...itemData,
+                product: {
+                    ...product,
+                    selected_variant: variantData // Variant is now nested inside Product
+                }
+            };
+        }
+
+        return item;
+    });
+
+    return cartJson;
+};
 
 /**
  * RECALCULATE TOTALS
@@ -139,7 +213,7 @@ async function getCart(user_id) {
 async function recalculateCart(cart_id, transaction) {
     const items = await CartItem.findAll({
         where: { cart_id },
-        include: [{ model: ProductVariant }],
+        include: [{ model: ProductVariant, as: "variant" }],
         transaction
     });
 
@@ -147,7 +221,7 @@ async function recalculateCart(cart_id, transaction) {
     let count = 0;
 
     for (const item of items) {
-        const price = item.ProductVariant.discount_price || item.ProductVariant.price;
+        const price = item.variant.discount_price || item.variant.price;
         total += price * item.quantity;
         count += item.quantity;
     }
