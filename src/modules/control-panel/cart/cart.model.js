@@ -41,6 +41,7 @@ const CartItem = sequelize.define(
         id: { type: DataTypes.BIGINT, autoIncrement: true, primaryKey: true, },
 
         cart_id: { type: DataTypes.BIGINT, allowNull: false, references: { model: "carts", key: "id" }, onDelete: "CASCADE", onUpdate: "CASCADE", },
+        product_id: { type: DataTypes.BIGINT, allowNull: false, references: { model: "products", key: "id" }, onDelete: "CASCADE", onUpdate: "CASCADE", },
         product_variant_id: { type: DataTypes.BIGINT, allowNull: false, references: { model: "product_variants", key: "id" }, onDelete: "CASCADE", onUpdate: "CASCADE", },
         quantity: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1, validate: { min: 1, max: 1000, }, },
     },

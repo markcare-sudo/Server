@@ -168,6 +168,7 @@ const { Permission } = require("../modules/control-panel/ima/permissions/permiss
 const { RolePermission, UserRole } = require("../modules/control-panel/ima/assignments/joins.model");
 const RefreshToken = require("../modules/auth/tokens/refreshToken.model");
 const Otp = require("../modules/auth/otp/otp.model");
+const Address = require("../modules/control-panel/address/address.model");
 
 module.exports = () => {
 
@@ -255,6 +256,10 @@ module.exports = () => {
    // CartItem <-> ProductVariant
    CartItem.belongsTo(ProductVariant, { foreignKey: "product_variant_id", as: "variant", onDelete: "CASCADE" });
    ProductVariant.hasMany(CartItem, { foreignKey: "product_variant_id", as: "cart_items", onDelete: "CASCADE" });
+
+   // User <-> Address
+   User.hasMany(Address, { foreignKey: "user_id", as: "addresses", onDelete: "CASCADE" }); // Fixed alias from cate_items to items
+   Address.belongsTo(User, { foreignKey: "user_id", as: "user" });
 
    /* =========================================================
       AUTH & SECURITY

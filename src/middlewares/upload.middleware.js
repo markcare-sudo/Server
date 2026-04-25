@@ -32,24 +32,31 @@
 // module.exports = upload;
 
 
-
-
 const multer = require("multer");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const cloudinary = require("../config/cloudinary");
 
+// ==============================
+// ✅ STORAGE CONFIG (FIXED)
+// ==============================
 const storage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
-    const folder = req.body.folder || "services"; // ✅ dynamic
+    const folder = req.body.folder || "services";
 
     return {
       folder,
       resource_type: "auto",
+
+      // ✅ IMPORTANT: control public_id
+      public_id: `${Date.now()}-${file.originalname.split(".")[0]}`,
     };
   },
 });
 
+// ==============================
+// ✅ MULTER INSTANCE
+// ==============================
 const upload = multer({
   storage,
   limits: {
@@ -57,4 +64,22 @@ const upload = multer({
   },
 });
 
-module.exports = upload;
+// ==============================
+// ❌ OLD WAY (URL parsing) — BAD
+// ==============================
+// will break with versions like /v12345/
+
+// ==============================
+// ✅ NEW WAY (USE public_id)
+// ==============================
+const deleteFile = async (publicId) => {
+  try {
+    if (!publicId) return;
+
+    await cloudinary.uploader.destroy(publicId);
+  } catch (error) {
+    console.error("Cloudinary delete error:", error.message);
+  }
+};
+
+module.exports = { upload, deleteFile };

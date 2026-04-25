@@ -14,9 +14,10 @@ const getCart = asyncHandler(async (req, res) => {
  * ADD ITEM
  */
 const addItem = asyncHandler(async (req, res) => {
-    const { product_variant_id, quantity } = req.body;
+    const { product_id, product_variant_id, quantity } = req.body;
 
     const item = await CartService.addToCart(req.user.id, {
+        product_id,
         product_variant_id,
         quantity
     });

@@ -4,6 +4,7 @@ const { Brand } = require("../brands/brand.model"); // ✅ FIXED
 const ApiError = require("../../../core/errors/ApiError");
 const { sequelize } = require("../../../config/db");
 const { Category } = require("../categories/category.model");
+const { deleteFile } = require("../../../middlewares/upload.middleware");
 
 /**
  * CREATE PRODUCT
@@ -171,48 +172,71 @@ async function updateProduct(id, data) {
 
         await product.update(productData, { transaction: t });
 
-        // ✅ VARIANTS SYNC
-        if (variants) {
-            const incomingIds = variants.map(v => v.id).filter(Boolean);
+        // =========================
+        // ✅ VARIANTS (FULL REPLACE)
+        // =========================
+        let createdVariants = [];
 
+        if (variants !== undefined) {
+            // 1. Delete all old variants (hard delete)
             await ProductVariant.destroy({
-                where: { product_id: id, id: { [Op.notIn]: incomingIds } },
+                where: { product_id: id },
+                force: true,
                 transaction: t
             });
 
-            let updatedVariants = [];
+            // 2. Recreate all variants fresh
+            if (variants.length) {
+                createdVariants = await ProductVariant.bulkCreate(
+                    variants.map(v => ({
+                        ...v,
+                        product_id: id
+                    })),
+                    { transaction: t, returning: true }
+                );
+            }
+        }
 
-            for (const v of variants) {
-                if (v.id) {
-                    await ProductVariant.update(v, {
-                        where: { id: v.id, product_id: id },
-                        transaction: t
-                    });
-                    updatedVariants.push({ id: v.id });
-                } else {
-                    const created = await ProductVariant.create(
-                        { ...v, product_id: id },
-                        { transaction: t }
-                    );
-                    updatedVariants.push(created);
+        // =========================
+        // ✅ IMAGES (FULL REPLACE)
+        // =========================
+        if (images !== undefined) {
+            // 1. Get old images (for file delete)
+            const oldImages = await ProductImage.findAll({
+                where: { product_id: id },
+                transaction: t
+            });
+
+            // 2. Hard delete DB records
+            await ProductImage.destroy({
+                where: { product_id: id },
+                force: true,
+                transaction: t
+            });
+
+            // 3. Delete physical files
+            for (const img of oldImages) {
+                if (img.url) {
+                    await deleteFile(img.url); // implement based on storage
                 }
             }
 
-            // ✅ IMAGES (NEW ONLY)
-            if (images?.length) {
+            // 4. Insert new images
+            if (images.length) {
                 const imagePayload = images.map((img, index) => {
                     let variant_id = null;
 
+                    // match variant index (since IDs are new now)
                     const match = img.fieldName?.match(/variant_(\d+)_images/);
-                    if (match && updatedVariants[match[1]]) {
-                        variant_id = updatedVariants[match[1]].id;
+                    if (match && createdVariants[match[1]]) {
+                        variant_id = createdVariants[match[1]].id;
                     }
 
                     return {
                         url: img.url,
                         product_id: id,
                         variant_id,
-                        is_primary: img.is_primary && !variant_id,
+                        is_primary: variant_id ? false : (img.is_primary ?? index === 0),
                         alt_text: product.name,
                         sort_order: index
                     };

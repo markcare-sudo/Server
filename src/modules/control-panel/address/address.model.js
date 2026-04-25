@@ -4,11 +4,22 @@ const { sequelize } = require("../../../config/db");
 const Address = sequelize.define("Address", {
     id: { type: DataTypes.BIGINT, autoIncrement: true, primaryKey: true },
     user_id: { type: DataTypes.BIGINT, allowNull: false },
-    address_type: { type: DataTypes.ENUM("HOME", "OFFICE", "INDUSTRIAL"), defaultValue: "HOME" },
-    street_address: { type: DataTypes.TEXT, allowNull: false },
+    full_name: { type: DataTypes.STRING(255), allowNull: false, },
+    phone: {
+        type: DataTypes.STRING(20),
+        allowNull: false,
+        validate: {
+            is: /^[0-9+() -]+$/i, // Basic phone validation
+        },
+    },
+    address: { type: DataTypes.TEXT, allowNull: false },
+    latitude: { type: DataTypes.DECIMAL(10, 8), allowNull: true, },
+    longitude: { type: DataTypes.DECIMAL(11, 8), allowNull: true, },
+    address_type: { type: DataTypes.ENUM("HOME", "WORK", "OTHER"), allowNull: false, defaultValue: "HOME", },
     city: { type: DataTypes.STRING(100), allowNull: false },
     state: { type: DataTypes.STRING(100), allowNull: false },
-    zip_code: { type: DataTypes.STRING(20), allowNull: false },
+    locality: { type: DataTypes.STRING(255), allowNull: false, comment: "Area, Sector, or Colony", },
+    pincode: { type: DataTypes.STRING(20), allowNull: false },
     is_default: { type: DataTypes.BOOLEAN, defaultValue: false }
 }, {
     tableName: "addresses",

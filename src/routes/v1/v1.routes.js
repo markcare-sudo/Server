@@ -31,6 +31,7 @@ router.use("/catalog/services", require("../../modules/control-panel/service/ser
 router.use("/catalog", require("../../modules/control-panel/catalog/catalog.routes"));
 router.use("/cart", require("../../modules/control-panel/cart/cart.routes"));
 router.use("/wishlist", require("../../modules/control-panel/wishlist/wishlist.routes"));
+router.use("/addresses", require("../../modules/control-panel/address/address.routes"))
 
 // BLOGS MODULE ROUTES
 router.use("/blogs", require("../../modules/blogs/blog.routes"));

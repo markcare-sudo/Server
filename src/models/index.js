@@ -37,6 +37,7 @@ require("../modules/control-panel/products/product.model");
 require("../modules/control-panel/service/service.model");
 require("../modules/control-panel/cart/cart.model");
 require("../modules/control-panel/wishlist/wishlist.model");
+require("../modules/control-panel/address/address.model")
 
 /* =========================================================
    INITIALIZE ALL LINKS

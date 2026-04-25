@@ -3,6 +3,7 @@ const { sequelize } = require("../../../config/db");
 const { Service, ServiceBenefit, MaintenanceSchedule, ServiceImage } = require("./service.model");
 const ApiError = require("../../../core/errors/ApiError");
 const { Category } = require("../categories/category.model");
+const { deleteFile } = require("../../../middlewares/upload.middleware");
 
 /**
  * CREATE SERVICE (WITH BENEFITS + SCHEDULE)
@@ -171,6 +172,70 @@ async function getBySlug(slug) {
 /**
  * UPDATE SERVICE
  */
+// async function updateService(id, data) {
+//     const { benefits, schedule, images, ...serviceData } = data;
+
+//     return await sequelize.transaction(async (t) => {
+//         const service = await Service.findByPk(id, { transaction: t });
+//         if (!service) throw new ApiError(404, "Service not found");
+
+//         // SLUG UPDATE
+//         if (serviceData.name && serviceData.name !== service.name) {
+//             serviceData.slug = `${serviceData.name.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`;
+//         }
+
+//         await service.update(serviceData, { transaction: t });
+
+//         // BENEFITS
+//         if (benefits) {
+//             await ServiceBenefit.destroy({ where: { service_id: id }, transaction: t });
+
+//             await ServiceBenefit.bulkCreate(
+//                 benefits.map(b => ({
+//                     service_id: id,
+//                     benefit_text: b.benefit_text,
+//                     is_included: b.is_included ?? true
+//                 })),
+//                 { transaction: t }
+//             );
+//         }
+
+//         // SCHEDULE
+//         if (schedule) {
+//             const existing = await MaintenanceSchedule.findOne({
+//                 where: { service_id: id },
+//                 transaction: t
+//             });
+
+//             if (existing) {
+//                 await existing.update(schedule, { transaction: t });
+//             } else {
+//                 await MaintenanceSchedule.create(
+//                     { ...schedule, service_id: id },
+//                     { transaction: t }
+//                 );
+//             }
+//         }
+
+//         // ✅ IMAGES REPLACE
+//         if (images) {
+//             await ServiceImage.destroy({ where: { service_id: id }, transaction: t });
+
+//             await ServiceImage.bulkCreate(
+//                 images.map(img => ({
+//                     service_id: id,
+//                     image_url: img.image_url,
+//                     is_primary: img.is_primary,
+//                     sort_order: img.sort_order
+//                 })),
+//                 { transaction: t }
+//             );
+//         }
+
+//         return service;
+//     });
+// }
+
 async function updateService(id, data) {
     const { benefits, schedule, images, ...serviceData } = data;
 
@@ -185,22 +250,28 @@ async function updateService(id, data) {
 
         await service.update(serviceData, { transaction: t });
 
-        // BENEFITS
-        if (benefits) {
-            await ServiceBenefit.destroy({ where: { service_id: id }, transaction: t });
+        // BENEFITS (FULL REPLACE)
+        if (benefits !== undefined) {
+            await ServiceBenefit.destroy({
+                where: { service_id: id },
+                force: true, // ensures hard delete if paranoid is enabled
+                transaction: t
+            });
 
-            await ServiceBenefit.bulkCreate(
-                benefits.map(b => ({
-                    service_id: id,
-                    benefit_text: b.benefit_text,
-                    is_included: b.is_included ?? true
-                })),
-                { transaction: t }
-            );
+            if (benefits.length) {
+                await ServiceBenefit.bulkCreate(
+                    benefits.map(b => ({
+                        service_id: id,
+                        benefit_text: b.benefit_text,
+                        is_included: b.is_included ?? true
+                    })),
+                    { transaction: t }
+                );
+            }
         }
 
-        // SCHEDULE
-        if (schedule) {
+        // SCHEDULE (UPSERT)
+        if (schedule !== undefined) {
             const existing = await MaintenanceSchedule.findOne({
                 where: { service_id: id },
                 transaction: t
@@ -216,19 +287,41 @@ async function updateService(id, data) {
             }
         }
 
-        // ✅ IMAGES REPLACE
-        if (images) {
-            await ServiceImage.destroy({ where: { service_id: id }, transaction: t });
+        // ✅ IMAGES (STRICT FULL REPLACEMENT)
+        if (images !== undefined) {
+            // STEP 1: Fetch old images (for file deletion if needed)
+            const oldImages = await ServiceImage.findAll({
+                where: { service_id: id },
+                transaction: t
+            });
 
-            await ServiceImage.bulkCreate(
-                images.map(img => ({
-                    service_id: id,
-                    image_url: img.image_url,
-                    is_primary: img.is_primary,
-                    sort_order: img.sort_order
-                })),
-                { transaction: t }
-            );
+            // STEP 2: Hard delete DB records
+            await ServiceImage.destroy({
+                where: { service_id: id },
+                force: true, // IMPORTANT if paranoid = true
+                transaction: t
+            });
+
+            // STEP 3: Delete physical files (if applicable)
+            for (const img of oldImages) {
+                if (img.image_url) {
+                    // 👉 implement this based on your storage
+                    await deleteFile(img.image_url);
+                }
+            }
+
+            // STEP 4: Insert new images (if provided)
+            if (images.length) {
+                await ServiceImage.bulkCreate(
+                    images.map((img, index) => ({
+                        service_id: id,
+                        image_url: img.image_url,
+                        is_primary: img.is_primary ?? index === 0,
+                        sort_order: img.sort_order ?? index
+                    })),
+                    { transaction: t }
+                );
+            }
         }
 
         return service;

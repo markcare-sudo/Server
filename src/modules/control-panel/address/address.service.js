@@ -1,13 +1,21 @@
 const Address = require("./address.model");
-const ApiError = require("../../../../core/errors/ApiError");
+const ApiError = require("../../../core/errors/ApiError");
 const { sequelize } = require("../../../config/db");
 
 /**
- * Add a new address for a user
+ * Create Address
  */
 async function createAddress(userId, data) {
     return await sequelize.transaction(async (t) => {
-        // If this new address is set as default, unset others
+
+        // If first address → force default
+        const count = await Address.count({ where: { user_id: userId }, transaction: t });
+
+        if (count === 0) {
+            data.is_default = true;
+        }
+
+        // If setting default → unset others
         if (data.is_default) {
             await Address.update(
                 { is_default: false },
@@ -15,28 +23,40 @@ async function createAddress(userId, data) {
             );
         }
 
-        return await Address.create({ ...data, user_id: userId }, { transaction: t });
+        return await Address.create(
+            { ...data, user_id: userId },
+            { transaction: t }
+        );
     });
 }
 
 /**
- * List all addresses for a specific user
+ * List Addresses
  */
 async function listUserAddresses(userId) {
     return await Address.findAll({
         where: { user_id: userId },
-        order: [["is_default", "DESC"], ["created_at", "DESC"]]
+        order: [
+            ["is_default", "DESC"],
+            ["created_at", "DESC"]
+        ]
     });
 }
 
 /**
- * Update an address
+ * Update Address
  */
 async function updateAddress(addressId, userId, data) {
     return await sequelize.transaction(async (t) => {
-        const address = await Address.findOne({ where: { id: addressId, user_id: userId } });
+
+        const address = await Address.findOne({
+            where: { id: addressId, user_id: userId },
+            transaction: t
+        });
+
         if (!address) throw new ApiError(404, "Address not found");
 
+        // If setting default → unset others
         if (data.is_default) {
             await Address.update(
                 { is_default: false },
@@ -44,18 +64,49 @@ async function updateAddress(addressId, userId, data) {
             );
         }
 
-        return await address.update(data, { transaction: t });
+        await address.update(data, { transaction: t });
+
+        return address;
     });
 }
 
 /**
- * Delete an address
+ * Delete Address
  */
 async function deleteAddress(addressId, userId) {
-    const address = await Address.findOne({ where: { id: addressId, user_id: userId } });
-    if (!address) throw new ApiError(404, "Address not found");
+    return await sequelize.transaction(async (t) => {
 
-    return await address.destroy();
+        const address = await Address.findOne({
+            where: { id: addressId, user_id: userId },
+            transaction: t
+        });
+
+        if (!address) throw new ApiError(404, "Address not found");
+
+        const wasDefault = address.is_default;
+
+        await address.destroy({ transaction: t });
+
+        // ✅ If default deleted → assign another
+        if (wasDefault) {
+            const next = await Address.findOne({
+                where: { user_id: userId },
+                order: [["created_at", "DESC"]],
+                transaction: t
+            });
+
+            if (next) {
+                await next.update({ is_default: true }, { transaction: t });
+            }
+        }
+
+        return true;
+    });
 }
 
-module.exports = { createAddress, listUserAddresses, updateAddress, deleteAddress };
+module.exports = {
+    createAddress,
+    listUserAddresses,
+    updateAddress,
+    deleteAddress
+};

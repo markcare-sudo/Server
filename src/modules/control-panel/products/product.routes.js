@@ -1,7 +1,6 @@
 const router = require("express").Router();
 const authMiddleware = require("../../../middlewares/auth.middleware");
-// const upload = require("../../../utils/multerConfig");
-const upload = require("../../../middlewares/upload.middleware");
+const { upload } = require("../../../middlewares/upload.middleware");
 const ProductController = require("./product.controller");
 
 // PUBLIC
