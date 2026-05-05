@@ -9,16 +9,19 @@ const { Brand } = require("../brands/brand.model");
 /**
  * GET OR CREATE CART
  */
-async function getOrCreateCart(user_id, session_id = null, transaction) {
+async function getOrCreateCart(user_id, transaction) {
     let cart = await Cart.findOne({
         where: { user_id },
-        transaction,
-        lock: transaction?.LOCK.UPDATE
+        transaction
     });
 
     if (!cart) {
         cart = await Cart.create(
-            { user_id, session_id },
+            {
+                user_id,
+                total_amount: 0,
+                item_count: 0
+            },
             { transaction }
         );
     }

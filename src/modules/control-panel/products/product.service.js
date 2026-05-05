@@ -128,6 +128,9 @@ async function getBySlug(slug) {
     return product;
 }
 
+/**
+ * GET DETAILS BY ID
+ */
 async function getById(id) {
     const product = await Product.findOne({
         where: { id, is_active: true },
@@ -165,7 +168,9 @@ async function updateProduct(id, data) {
         const product = await Product.findByPk(id, { transaction: t });
         if (!product) throw new ApiError(404, "Product not found");
 
+        // =========================
         // ✅ SLUG UPDATE
+        // =========================
         if (productData.name && productData.name !== product.name) {
             productData.slug = `${productData.name.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`;
         }
@@ -173,70 +178,114 @@ async function updateProduct(id, data) {
         await product.update(productData, { transaction: t });
 
         // =========================
-        // ✅ VARIANTS (FULL REPLACE)
+        // ✅ VARIANTS (SAFE UPDATE)
         // =========================
-        let createdVariants = [];
+        let variantIdMap = {}; // ⭐ index → actual DB id
 
         if (variants !== undefined) {
-            // 1. Delete all old variants (hard delete)
-            await ProductVariant.destroy({
+            const existingVariants = await ProductVariant.findAll({
                 where: { product_id: id },
-                force: true,
                 transaction: t
             });
 
-            // 2. Recreate all variants fresh
-            if (variants.length) {
-                createdVariants = await ProductVariant.bulkCreate(
-                    variants.map(v => ({
+            const existingIds = existingVariants.map(v => v.id);
+            const incomingIds = variants.filter(v => v.id).map(v => v.id);
+
+            // 1️⃣ DELETE removed variants (⚠️ only if safe)
+            const toDelete = existingIds.filter(id => !incomingIds.includes(id));
+
+            if (toDelete.length) {
+                await ProductVariant.destroy({
+                    where: { id: toDelete },
+                    transaction: t
+                });
+            }
+
+            // 2️⃣ UPDATE existing variants + map
+            for (let i = 0; i < variants.length; i++) {
+                const variant = variants[i];
+
+                if (variant.id) {
+                    await ProductVariant.update(variant, {
+                        where: { id: variant.id },
+                        transaction: t
+                    });
+
+                    variantIdMap[i] = variant.id;
+                }
+            }
+
+            // 3️⃣ CREATE new variants
+            const newVariants = variants.filter(v => !v.id);
+
+            if (newVariants.length) {
+                const created = await ProductVariant.bulkCreate(
+                    newVariants.map(v => ({
                         ...v,
                         product_id: id
                     })),
                     { transaction: t, returning: true }
                 );
+
+                // map new ones
+                let newIndex = 0;
+                for (let i = 0; i < variants.length; i++) {
+                    if (!variants[i].id) {
+                        variantIdMap[i] = created[newIndex].id;
+                        newIndex++;
+                    }
+                }
             }
         }
 
         // =========================
-        // ✅ IMAGES (FULL REPLACE)
+        // ✅ IMAGES (FULL REPLACE - SAFE)
         // =========================
         if (images !== undefined) {
-            // 1. Get old images (for file delete)
+            // 1️⃣ Fetch old images
             const oldImages = await ProductImage.findAll({
                 where: { product_id: id },
                 transaction: t
             });
 
-            // 2. Hard delete DB records
+            // 2️⃣ Delete DB records
             await ProductImage.destroy({
                 where: { product_id: id },
                 force: true,
                 transaction: t
             });
 
-            // 3. Delete physical files
+            // 3️⃣ Delete files (optional but good)
             for (const img of oldImages) {
                 if (img.url) {
-                    await deleteFile(img.url); // implement based on storage
+                    try {
+                        await deleteFile(img.url);
+                    } catch (err) {
+                        console.warn("Failed to delete file:", img.url);
+                    }
                 }
             }
 
-            // 4. Insert new images
+            // 4️⃣ Insert new images
             if (images.length) {
                 const imagePayload = images.map((img, index) => {
                     let variant_id = null;
 
-                    // match variant index (since IDs are new now)
+                    // ✅ Extract variant index from field name
                     const match = img.fieldName?.match(/variant_(\d+)_images/);
-                    if (match && createdVariants[match[1]]) {
-                        variant_id = createdVariants[match[1]].id;
+
+                    if (match) {
+                        const variantIndex = Number(match[1]);
+                        variant_id = variantIdMap[variantIndex] || null;
                     }
 
                     return {
                         url: img.url,
                         product_id: id,
                         variant_id,
-                        is_primary: variant_id ? false : (img.is_primary ?? index === 0),
+                        is_primary: variant_id
+                            ? false
+                            : (img.is_primary ?? index === 0),
                         alt_text: product.name,
                         sort_order: index
                     };

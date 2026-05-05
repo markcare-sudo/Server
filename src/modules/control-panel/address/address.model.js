@@ -9,7 +9,7 @@ const Address = sequelize.define("Address", {
         type: DataTypes.STRING(20),
         allowNull: false,
         validate: {
-            is: /^[0-9+() -]+$/i, // Basic phone validation
+            is: /^[0-9+() -]+$/i,
         },
     },
     address: { type: DataTypes.TEXT, allowNull: false },

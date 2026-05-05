@@ -169,6 +169,9 @@ const { RolePermission, UserRole } = require("../modules/control-panel/ima/assig
 const RefreshToken = require("../modules/auth/tokens/refreshToken.model");
 const Otp = require("../modules/auth/otp/otp.model");
 const Address = require("../modules/control-panel/address/address.model");
+const Order = require("../modules/control-panel/orders/order.model");
+const Payment = require("../modules/control-panel/orders/payment.model");
+const OrderItem = require("../modules/control-panel/orders/orderItem.model");
 
 module.exports = () => {
 
@@ -260,6 +263,35 @@ module.exports = () => {
    // User <-> Address
    User.hasMany(Address, { foreignKey: "user_id", as: "addresses", onDelete: "CASCADE" }); // Fixed alias from cate_items to items
    Address.belongsTo(User, { foreignKey: "user_id", as: "user" });
+
+
+   // User <-> Order
+   User.hasMany(Order, { foreignKey: "user_id", as: "orders", onDelete: "CASCADE" });
+   Order.belongsTo(User, { foreignKey: "user_id", as: "user" });
+
+   // Order <-> Payment
+   Order.hasOne(Payment, { foreignKey: "order_id", as: "payment", onDelete: "CASCADE" });
+   Payment.belongsTo(Order, { foreignKey: "order_id", as: "order" });
+
+   // Address <-> Order (Order billing/shipping address)
+   Address.hasMany(Order, { foreignKey: "billing_address_id", as: "billing_orders" });
+   Address.hasMany(Order, { foreignKey: "shipping_address_id", as: "shipping_orders" });
+
+   Order.belongsTo(Address, { foreignKey: "billing_address_id", as: "billing_address" });
+   Order.belongsTo(Address, { foreignKey: "shipping_address_id", as: "shipping_address" });
+
+   // Order <-> OrderItem
+   Order.hasMany(OrderItem, { foreignKey: "order_id", as: "items", onDelete: "CASCADE" });
+   OrderItem.belongsTo(Order, { foreignKey: "order_id", as: "order" });
+
+   // OrderItem <-> ProductVariant
+   OrderItem.belongsTo(ProductVariant, { foreignKey: "variant_id", as: "variant" });
+   ProductVariant.hasMany(OrderItem, { foreignKey: "variant_id", as: "order_items" });
+
+   // OrderItem <-> Product
+   OrderItem.belongsTo(Product, { foreignKey: "product_id", as: "product", onDelete: "CASCADE" });
+   Product.hasMany(OrderItem, { foreignKey: "product_id", as: "order_items" });
+
 
    /* =========================================================
       AUTH & SECURITY

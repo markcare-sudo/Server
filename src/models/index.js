@@ -39,6 +39,9 @@ require("../modules/control-panel/cart/cart.model");
 require("../modules/control-panel/wishlist/wishlist.model");
 require("../modules/control-panel/address/address.model")
 
+require("../modules/control-panel/orders/order.model");
+require("../modules/control-panel/orders/payment.model");
+
 /* =========================================================
    INITIALIZE ALL LINKS
 ========================================================= */

@@ -172,70 +172,6 @@ async function getBySlug(slug) {
 /**
  * UPDATE SERVICE
  */
-// async function updateService(id, data) {
-//     const { benefits, schedule, images, ...serviceData } = data;
-
-//     return await sequelize.transaction(async (t) => {
-//         const service = await Service.findByPk(id, { transaction: t });
-//         if (!service) throw new ApiError(404, "Service not found");
-
-//         // SLUG UPDATE
-//         if (serviceData.name && serviceData.name !== service.name) {
-//             serviceData.slug = `${serviceData.name.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`;
-//         }
-
-//         await service.update(serviceData, { transaction: t });
-
-//         // BENEFITS
-//         if (benefits) {
-//             await ServiceBenefit.destroy({ where: { service_id: id }, transaction: t });
-
-//             await ServiceBenefit.bulkCreate(
-//                 benefits.map(b => ({
-//                     service_id: id,
-//                     benefit_text: b.benefit_text,
-//                     is_included: b.is_included ?? true
-//                 })),
-//                 { transaction: t }
-//             );
-//         }
-
-//         // SCHEDULE
-//         if (schedule) {
-//             const existing = await MaintenanceSchedule.findOne({
-//                 where: { service_id: id },
-//                 transaction: t
-//             });
-
-//             if (existing) {
-//                 await existing.update(schedule, { transaction: t });
-//             } else {
-//                 await MaintenanceSchedule.create(
-//                     { ...schedule, service_id: id },
-//                     { transaction: t }
-//                 );
-//             }
-//         }
-
-//         // ✅ IMAGES REPLACE
-//         if (images) {
-//             await ServiceImage.destroy({ where: { service_id: id }, transaction: t });
-
-//             await ServiceImage.bulkCreate(
-//                 images.map(img => ({
-//                     service_id: id,
-//                     image_url: img.image_url,
-//                     is_primary: img.is_primary,
-//                     sort_order: img.sort_order
-//                 })),
-//                 { transaction: t }
-//             );
-//         }
-
-//         return service;
-//     });
-// }
-
 async function updateService(id, data) {
     const { benefits, schedule, images, ...serviceData } = data;
 
@@ -243,34 +179,43 @@ async function updateService(id, data) {
         const service = await Service.findByPk(id, { transaction: t });
         if (!service) throw new ApiError(404, "Service not found");
 
-        // SLUG UPDATE
+        // =========================
+        // ✅ SLUG UPDATE
+        // =========================
         if (serviceData.name && serviceData.name !== service.name) {
             serviceData.slug = `${serviceData.name.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`;
         }
 
         await service.update(serviceData, { transaction: t });
 
-        // BENEFITS (FULL REPLACE)
+        // =========================
+        // ✅ BENEFITS (SAFE REPLACE)
+        // =========================
         if (benefits !== undefined) {
+            // delete old
             await ServiceBenefit.destroy({
                 where: { service_id: id },
-                force: true, // ensures hard delete if paranoid is enabled
+                force: true,
                 transaction: t
             });
 
+            // insert new
             if (benefits.length) {
                 await ServiceBenefit.bulkCreate(
-                    benefits.map(b => ({
+                    benefits.map((b, index) => ({
                         service_id: id,
                         benefit_text: b.benefit_text,
-                        is_included: b.is_included ?? true
+                        is_included: b.is_included ?? true,
+                        sort_order: index
                     })),
                     { transaction: t }
                 );
             }
         }
 
-        // SCHEDULE (UPSERT)
+        // =========================
+        // ✅ SCHEDULE (UPSERT)
+        // =========================
         if (schedule !== undefined) {
             const existing = await MaintenanceSchedule.findOne({
                 where: { service_id: id },
@@ -287,40 +232,44 @@ async function updateService(id, data) {
             }
         }
 
-        // ✅ IMAGES (STRICT FULL REPLACEMENT)
+        // =========================
+        // ✅ IMAGES (SAFE FULL REPLACE)
+        // =========================
         if (images !== undefined) {
-            // STEP 1: Fetch old images (for file deletion if needed)
+            // 1️⃣ Get old images
             const oldImages = await ServiceImage.findAll({
                 where: { service_id: id },
                 transaction: t
             });
 
-            // STEP 2: Hard delete DB records
+            // 2️⃣ Delete DB records
             await ServiceImage.destroy({
                 where: { service_id: id },
-                force: true, // IMPORTANT if paranoid = true
+                force: true,
                 transaction: t
             });
 
-            // STEP 3: Delete physical files (if applicable)
+            // 3️⃣ Delete files safely (DON'T BREAK FLOW)
             for (const img of oldImages) {
                 if (img.image_url) {
-                    // 👉 implement this based on your storage
-                    await deleteFile(img.image_url);
+                    try {
+                        await deleteFile(img.image_url);
+                    } catch (err) {
+                        console.warn("File delete failed:", img.image_url);
+                    }
                 }
             }
 
-            // STEP 4: Insert new images (if provided)
+            // 4️⃣ Insert new images
             if (images.length) {
-                await ServiceImage.bulkCreate(
-                    images.map((img, index) => ({
-                        service_id: id,
-                        image_url: img.image_url,
-                        is_primary: img.is_primary ?? index === 0,
-                        sort_order: img.sort_order ?? index
-                    })),
-                    { transaction: t }
-                );
+                const payload = images.map((img, index) => ({
+                    service_id: id,
+                    image_url: img.image_url,
+                    is_primary: img.is_primary ?? index === 0,
+                    sort_order: img.sort_order ?? index,
+                }));
+
+                await ServiceImage.bulkCreate(payload, { transaction: t });
             }
         }
 

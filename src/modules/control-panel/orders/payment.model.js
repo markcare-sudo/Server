@@ -5,15 +5,17 @@ const Payment = sequelize.define("Payment", {
     id: { type: DataTypes.BIGINT, autoIncrement: true, primaryKey: true },
     order_id: { type: DataTypes.BIGINT, allowNull: false, },
     provider: { type: DataTypes.STRING(50), }, // razorpay / stripe
-    payment_id: { type: DataTypes.STRING(100), },
+    method: { type: DataTypes.STRING },
+    transaction_id: { type: DataTypes.STRING },
     amount: { type: DataTypes.DECIMAL(12, 2), allowNull: false, },
     status: { type: DataTypes.ENUM("pending", "success", "failed"), defaultValue: "pending", },
-    raw_response: { type: DataTypes.JSONB, },
+    payment_response: { type: DataTypes.JSON },
 
 }, {
     tableName: "payments",
     timestamps: true,
     underscored: true,
+    paranoid: true,
 });
 
-module.exports = { Payment };
+module.exports = Payment;
