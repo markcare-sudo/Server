@@ -6,27 +6,9 @@ const Permission = sequelize.define(
   "Permission",
   {
     id: { type: DataTypes.BIGINT, autoIncrement: true, primaryKey: true },
-    code: {
-      type: DataTypes.STRING(150),
-      allowNull: false,
-      unique: true,
-    },
-    module_id: {
-      type: DataTypes.BIGINT,
-      allowNull: false,
-      references: {
-        model: "platform_modules",
-        key: "id",
-      },
-    },
-    feature_id: {
-      type: DataTypes.BIGINT,
-      allowNull: true, // allow module-level permissions
-      references: {
-        model: "platform_features",
-        key: "id",
-      },
-    },
+    code: { type: DataTypes.STRING(150), allowNull: false, unique: true, comment: "Example: ECOM.ORDERS.READ", },
+    scope: { type: DataTypes.ENUM("OWN", "ALL", "TEAM"), allowNull: false, defaultValue: "OWN", },
+    module_id: { type: DataTypes.BIGINT, allowNull: false, references: { model: "modules", key: "id", }, },
     action: { type: DataTypes.STRING(40), allowNull: false }, // VIEW/CREATE/EDIT
     description: { type: DataTypes.STRING(255), allowNull: true },
   },
@@ -38,7 +20,6 @@ const Permission = sequelize.define(
     indexes: [
       { unique: true, fields: ["code"] },
       { fields: ["module_id"] },
-      { fields: ["feature_id"] },
     ],
   }
 );

@@ -26,8 +26,7 @@ require("../modules/auth/tokens/refreshToken.model");
 require("../modules/callbackRequest/callbackRequest.model");
 
 // Configarations
-require("../modules/control-panel/ima/platformModules/platformModule.model");
-require("../modules/control-panel/ima/platformFeatures/platformFeature.model");
+require("../modules/control-panel/ima/modules/module.model");
 require("../modules/control-panel/ima/audit-logs/audit-log.model");
 
 // E-Commerce

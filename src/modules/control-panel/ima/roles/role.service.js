@@ -253,7 +253,7 @@ async function listRoles(query) {
     include: [
       {
         model: Permission,
-        attributes: ["id", "action", "feature_id", "module_id"],
+        attributes: ["id", "action", "module_id"],
         through: { attributes: [] },
       },
     ],

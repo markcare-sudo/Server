@@ -12,8 +12,7 @@ router.use("/auth/profile", require("../../modules/auth/profile/authProfile.rout
 router.use("/iam/permissions", require("../../modules/control-panel/ima/permissions/permission.routes"));
 router.use("/iam/roles", require("../../modules/control-panel/ima/roles/role.routes"));
 router.use("/iam/users", require("../../modules/control-panel/ima/users/user.routes"));
-router.use("/iam/modules", require("../../modules/control-panel/ima/platformModules/platformModule.routes"));
-router.use("/iam/features", require("../../modules/control-panel/ima/platformFeatures/platformFeature.routes"));
+router.use("/iam/modules", require("../../modules/control-panel/ima/modules/module.routes"));
 router.use("/iam/assignments", require("../../modules/control-panel/ima/assignments/assignment.routes"));
 
 // PLATFORM CONFIGURATIONS

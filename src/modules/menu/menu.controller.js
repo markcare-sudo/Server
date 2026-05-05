@@ -3,7 +3,7 @@
 const asyncHandler = require("../../utils/asyncHandler");
 const MenuService = require("./menu.service");
 
-const getMenu = asyncHandler(async (req, res) => {
+const getSidebar = asyncHandler(async (req, res) => {
   const user = req.user; // from auth middleware
 
   const menu = await MenuService.getUserMenu(user);
@@ -15,5 +15,5 @@ const getMenu = asyncHandler(async (req, res) => {
 });
 
 module.exports = {
-  getMenu,
+  getSidebar,
 };

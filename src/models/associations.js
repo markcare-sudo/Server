@@ -155,8 +155,6 @@ const { Brand } = require("../modules/control-panel/brands/brand.model");
 const { Cart, CartItem } = require("../modules/control-panel/cart/cart.model");
 const { Category } = require("../modules/control-panel/categories/category.model");
 const AuditLog = require("../modules/control-panel/ima/audit-logs/audit-log.model");
-const PlatformFeature = require("../modules/control-panel/ima/platformFeatures/platformFeature.model");
-const PlatformModule = require("../modules/control-panel/ima/platformModules/platformModule.model");
 const { Product, ProductVariant, ProductImage } = require("../modules/control-panel/products/product.model");
 const { Service } = require("../modules/control-panel/service/service.model");
 const { Wishlist, WishlistItem } = require("../modules/control-panel/wishlist/wishlist.model");
@@ -172,6 +170,7 @@ const Address = require("../modules/control-panel/address/address.model");
 const Order = require("../modules/control-panel/orders/order.model");
 const Payment = require("../modules/control-panel/orders/payment.model");
 const OrderItem = require("../modules/control-panel/orders/orderItem.model");
+const Module = require("../modules/control-panel/ima/modules/module.model");
 
 module.exports = () => {
 
@@ -198,17 +197,10 @@ module.exports = () => {
    /* =========================================================
       IMA (MODULES, FEATURES, PERMISSIONS)
    ========================================================= */
-   // Module <-> Feature
-   PlatformModule.hasMany(PlatformFeature, { foreignKey: "module_id", as: "features", onDelete: "CASCADE" });
-   PlatformFeature.belongsTo(PlatformModule, { foreignKey: "module_id", as: "module" });
 
    // Module <-> Permission
-   PlatformModule.hasMany(Permission, { foreignKey: "module_id", as: "permissions", onDelete: "CASCADE" });
-   Permission.belongsTo(PlatformModule, { foreignKey: "module_id", as: "module" });
-
-   // Feature <-> Permission
-   PlatformFeature.hasMany(Permission, { foreignKey: "feature_id", as: "permissions", onDelete: "CASCADE" });
-   Permission.belongsTo(PlatformFeature, { foreignKey: "feature_id", as: "feature" });
+   Module.hasMany(Permission, { foreignKey: "module_id", as: "permissions", onDelete: "CASCADE" });
+   Permission.belongsTo(Module, { foreignKey: "module_id", as: "module" });
 
    /* =========================================================
       CATALOG (CATEGORY, BRAND, PRODUCT, SERVICE)
