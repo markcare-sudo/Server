@@ -171,6 +171,7 @@ const Order = require("../modules/control-panel/orders/order.model");
 const Payment = require("../modules/control-panel/orders/payment.model");
 const OrderItem = require("../modules/control-panel/orders/orderItem.model");
 const Module = require("../modules/control-panel/ima/modules/module.model");
+const ServiceBooking = require("../modules/control-panel/serviceBooking/serviceBooking.model");
 
 module.exports = () => {
 
@@ -284,6 +285,17 @@ module.exports = () => {
    OrderItem.belongsTo(Product, { foreignKey: "product_id", as: "product", onDelete: "CASCADE" });
    Product.hasMany(OrderItem, { foreignKey: "product_id", as: "order_items" });
 
+   // User <-> ServiceBooking
+   User.hasMany(ServiceBooking, { foreignKey: "user_id", as: "service_bookings" });
+   ServiceBooking.belongsTo(User, { foreignKey: "user_id", as: "user" });
+
+   // Service <-> ServiceBooking
+   Service.hasMany(ServiceBooking, { foreignKey: "service_id", as: "bookings" });
+   ServiceBooking.belongsTo(Service, { foreignKey: "service_id", as: "service" });
+
+   // Address <-> ServiceBooking
+   Address.hasMany(ServiceBooking, { foreignKey: "address_id", as: "service_bookings" });
+   ServiceBooking.belongsTo(Address, { foreignKey: "address_id", as: "address" });
 
    /* =========================================================
       AUTH & SECURITY

@@ -43,15 +43,24 @@ async function createService(data) {
 
         // ✅ IMAGES
         if (images && images.length) {
-            await ServiceImage.bulkCreate(
-                images.map(img => ({
-                    service_id: service.id,
-                    image_url: img.image_url,
-                    is_primary: img.is_primary,
-                    sort_order: img.sort_order
-                })),
-                { transaction: t }
-            );
+            const validImages = images
+                .map((img, index) => {
+                    const url = img.url
+
+                    if (!url) return null; // ❌ skip invalid
+
+                    return {
+                        service_id: service.id,
+                        url,
+                        is_primary: img.is_primary ?? index === 0,
+                        sort_order: img.sort_order ?? index
+                    };
+                })
+                .filter(Boolean); // ✅ remove nulls
+
+            if (validImages.length) {
+                await ServiceImage.bulkCreate(validImages, { transaction: t });
+            }
         }
 
         return await Service.findByPk(service.id, {
@@ -183,23 +192,23 @@ async function updateService(id, data) {
         // ✅ SLUG UPDATE
         // =========================
         if (serviceData.name && serviceData.name !== service.name) {
-            serviceData.slug = `${serviceData.name.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`;
+            serviceData.slug = `${serviceData.name
+                .toLowerCase()
+                .replace(/\s+/g, "-")}-${Date.now()}`;
         }
 
         await service.update(serviceData, { transaction: t });
 
         // =========================
-        // ✅ BENEFITS (SAFE REPLACE)
+        // ✅ BENEFITS (REPLACE)
         // =========================
         if (benefits !== undefined) {
-            // delete old
             await ServiceBenefit.destroy({
                 where: { service_id: id },
                 force: true,
                 transaction: t
             });
 
-            // insert new
             if (benefits.length) {
                 await ServiceBenefit.bulkCreate(
                     benefits.map((b, index) => ({
@@ -233,10 +242,11 @@ async function updateService(id, data) {
         }
 
         // =========================
-        // ✅ IMAGES (SAFE FULL REPLACE)
+        // ✅ IMAGES (FIXED - ONLY IF NEW UPLOAD)
         // =========================
-        if (images !== undefined) {
-            // 1️⃣ Get old images
+        if (images && images.length > 0) {
+
+            // 1️⃣ Fetch old images
             const oldImages = await ServiceImage.findAll({
                 where: { service_id: id },
                 transaction: t
@@ -249,28 +259,22 @@ async function updateService(id, data) {
                 transaction: t
             });
 
-            // 3️⃣ Delete files safely (DON'T BREAK FLOW)
-            for (const img of oldImages) {
-                if (img.image_url) {
-                    try {
-                        await deleteFile(img.image_url);
-                    } catch (err) {
-                        console.warn("File delete failed:", img.image_url);
-                    }
-                }
-            }
+            // 3️⃣ Delete Cloudinary files (public_id)
+            await Promise.all(
+                oldImages.map(img => img.url && deleteFile(img.url))
+            );
 
-            // 4️⃣ Insert new images
-            if (images.length) {
-                const payload = images.map((img, index) => ({
+            // 4️⃣ Insert new images (store ONLY public_id)
+            const payload = images
+                .filter(img => img?.url) // ✅ REMOVE invalid images
+                .map((img, index) => ({
                     service_id: id,
-                    image_url: img.image_url,
+                    url: img.url, // public_id
                     is_primary: img.is_primary ?? index === 0,
                     sort_order: img.sort_order ?? index,
                 }));
 
-                await ServiceImage.bulkCreate(payload, { transaction: t });
-            }
+            await ServiceImage.bulkCreate(payload, { transaction: t });
         }
 
         return service;

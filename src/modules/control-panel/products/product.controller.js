@@ -37,7 +37,7 @@ const create = asyncHandler(async (req, res) => {
 
     // ✅ Cloudinary files
     const images = req.files?.map((file, index) => ({
-        url: file.path,
+        url: file.filename,
         fieldName: file.fieldname,
         is_primary: file.fieldname === "main_image",
         sort_order: index
@@ -66,7 +66,7 @@ const update = asyncHandler(async (req, res) => {
 
     // ✅ Cloudinary images
     const images = req.files?.map((file, index) => ({
-        url: file.path,
+        url: file.filename,
         fieldName: file.fieldname,
         is_primary: file.fieldname === "main_image",
         sort_order: index

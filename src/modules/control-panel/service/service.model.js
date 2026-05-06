@@ -73,7 +73,7 @@ const MaintenanceSchedule = sequelize.define("MaintenanceSchedule", {
 const ServiceImage = sequelize.define("ServiceImage", {
     id: { type: DataTypes.BIGINT, autoIncrement: true, primaryKey: true },
     service_id: { type: DataTypes.BIGINT, allowNull: false },
-    image_url: { type: DataTypes.STRING(500), allowNull: false },
+    url: { type: DataTypes.STRING(500), allowNull: false },
     is_primary: { type: DataTypes.BOOLEAN, defaultValue: false },
     sort_order: { type: DataTypes.INTEGER, defaultValue: 0 }
 

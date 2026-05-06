@@ -1,42 +1,42 @@
 const { DataTypes } = require("sequelize");
 const { sequelize } = require("../../../config/db");
 
-/**
- * SERVICE_BOOKING: The actual appointment/job card
- */
 const ServiceBooking = sequelize.define("ServiceBooking", {
     id: { type: DataTypes.BIGINT, autoIncrement: true, primaryKey: true },
 
-    // Links
+    // 🔗 Links
     service_id: { type: DataTypes.BIGINT, allowNull: false },
+    address_id: { type: DataTypes.BIGINT, allowNull: false },
     user_id: { type: DataTypes.BIGINT, allowNull: false },
-    order_id: { type: DataTypes.BIGINT, allowNull: true }, // Links to payment/transaction
+    booking_code: { type: DataTypes.STRING(50), unique: true },
 
-    // Status Tracking
-    status: {
-        type: DataTypes.ENUM("PENDING", "ASSIGNED", "IN_PROGRESS", "COMPLETED", "CANCELLED"),
-        defaultValue: "PENDING"
-    },
+    // 💳 Payment
+    payment_method: { type: DataTypes.ENUM("ONLINE", "COD"), allowNull: false },
+    payment_status: { type: DataTypes.ENUM("PENDING", "PAID", "FAILED", "UNPAID"), defaultValue: "UNPAID" },
+    transaction_id: { type: DataTypes.STRING(255) },
 
-    // Appointment Logistics
+    // 📦 Booking lifecycle (JOB FLOW)
+    status: { type: DataTypes.ENUM("PENDING", "CONFIRMED", "ASSIGNED", "IN_PROGRESS", "COMPLETED", "CANCELLED"), defaultValue: "PENDING" },
+
+    // 📅 Appointment
     scheduled_date: { type: DataTypes.DATEONLY, allowNull: false },
-    time_slot: { type: DataTypes.STRING(50) }, // e.g., "10:00 AM - 12:00 PM"
+    time_slot: { type: DataTypes.STRING(50) },
 
-    // Resource Assignment
+    // 👨‍🔧 Technician
     technician_id: { type: DataTypes.BIGINT, allowNull: true },
 
-    // Asset Context (Since no cart, we capture what is being serviced here)
-    asset_info: {
-        type: DataTypes.JSONB,
-        defaultValue: {},
-        comment: "Stores Brand, Model, Serial No, or Address of the machine"
-    },
+    // 🧾 Asset Info
+    asset_info: { type: DataTypes.JSONB, defaultValue: {}, comment: "Brand, Model, Serial No, etc." },
 
-    // Completion Details
+    // ⏱️ Timeline
     started_at: { type: DataTypes.DATE },
     completed_at: { type: DataTypes.DATE },
+
+    // 🔐 Completion security
     completion_otp: { type: DataTypes.STRING(6) },
-    technician_notes: { type: DataTypes.TEXT }
+
+    // 📝 Notes
+    technician_notes: { type: DataTypes.TEXT },
 
 }, {
     tableName: "service_bookings",

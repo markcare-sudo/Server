@@ -27,8 +27,13 @@ async function createOrder(user_id, data) {
         // =========================
         // 🛒 FROM CART
         // =========================
+        let cart;
         if (from_cart) {
-            const cart = await Cart.findOne({ where: { user_id }, include: ["items"], transaction: t });
+            cart = await Cart.findOne({
+                where: { user_id },
+                include: ["items"],
+                transaction: t,
+            });
 
             if (!cart || !cart.items.length) {
                 throw new ApiError(400, "Cart is empty");
@@ -64,7 +69,12 @@ async function createOrder(user_id, data) {
             }
         }
 
-        const total_amount = orderItems.reduce((sum, i) => sum + i.subtotal, 0);
+        const total_amount = orderItems.reduce(
+            (sum, i) => sum + i.subtotal,
+            0
+        );
+
+        const order_code = `MC-${Date.now()}`;
 
         // =========================
         // CREATE ORDER
@@ -75,6 +85,7 @@ async function createOrder(user_id, data) {
                 address_id,
                 total_amount,
                 payment_method,
+                order_code
             },
             { transaction: t }
         );
@@ -83,32 +94,59 @@ async function createOrder(user_id, data) {
         // CREATE ORDER ITEMS
         // =========================
         await OrderItem.bulkCreate(
-            orderItems.map((i) => ({ ...i, order_id: order.id })),
-            { transaction: t }
-        );
-
-        // =========================
-        // CREATE RAZORPAY ORDER
-        // =========================
-        const razorpayOrder = await razorpay.orders.create({
-            amount: Math.round(total_amount * 100), // paisa
-            currency: "INR",
-            receipt: `order_${order.id}`,
-        });
-
-        // =========================
-        // CREATE PAYMENT ENTRY
-        // =========================
-        const payment = await Payment.create(
-            {
+            orderItems.map((i) => ({
+                ...i,
                 order_id: order.id,
-                provider: "razorpay",
-                amount: total_amount,
-                status: "pending",
-                transaction_id: razorpayOrder.id,
-            },
+            })),
             { transaction: t }
         );
+
+        // =========================
+        // 💳 PAYMENT LOGIC FIXED
+        // =========================
+        let payment = null;
+        let razorpayOrder = null;
+
+        if (payment_method === "ONLINE") {
+            razorpayOrder = await razorpay.orders.create({
+                amount: Math.round(total_amount * 100),
+                currency: "INR",
+                receipt: `order_${order.id}`,
+            });
+
+            payment = await Payment.create(
+                {
+                    order_id: order.id,
+                    provider: "razorpay",
+                    amount: total_amount,
+                    status: "pending",
+                    transaction_id: razorpayOrder.id,
+                },
+                { transaction: t }
+            );
+        }
+
+        if (payment_method === "COD") {
+            payment = await Payment.create(
+                {
+                    order_id: order.id,
+                    provider: "cod",
+                    amount: total_amount,
+                    status: "pending",
+                    transaction_id: null,
+                },
+                { transaction: t }
+            );
+        }
+
+        if (from_cart) {
+            await CartItem.destroy({
+                where: {
+                    cart_id: cart?.id,
+                },
+                transaction: t,
+            });
+        }
 
         return {
             order,
@@ -121,162 +159,71 @@ async function createOrder(user_id, data) {
 /**
  * VERIFY PAYMENT
  */
+
 async function verifyPayment(data) {
-    const {
-        razorpay_order_id,
-        razorpay_payment_id,
-        razorpay_signature,
-    } = data;
+    try {
+        const {
+            razorpay_order_id,
+            razorpay_payment_id,
+            razorpay_signature,
+        } = data;
 
-    const body = razorpay_order_id + "|" + razorpay_payment_id;
 
-    const expectedSignature = crypto
-        .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-        .update(body.toString())
-        .digest("hex");
+        // ✅ Step 1: Create body
+        const body = `${razorpay_order_id}|${razorpay_payment_id}`;
 
-    if (expectedSignature !== razorpay_signature) {
-        throw new ApiError(400, "Invalid payment signature");
+        // ✅ Step 2: Generate expected signature
+        const expectedSignature = crypto
+            .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+            .update(body)
+            .digest("hex");
+
+
+        // ✅ Step 3: Compare
+        if (expectedSignature !== razorpay_signature) {
+            throw new Error("Invalid payment signature");
+        }
+
+        // ✅ Step 4: Find payment
+        const payment = await Payment.findOne({
+            where: { transaction_id: razorpay_order_id },
+        });
+
+        if (!payment) {
+            console.error("❌ Payment not found in DB");
+            throw new Error("Payment not found");
+        }
+
+        // ✅ Step 5: Update payment
+        await payment.update({
+            status: "success",
+            transaction_id: razorpay_payment_id,
+            payment_response: data,
+        });
+
+        // ✅ Step 6: Update order
+        await Order.update(
+            {
+                payment_status: "PAID",
+                order_status: "CONFIRMED",
+            },
+            {
+                where: { id: payment.order_id },
+            }
+        );
+
+        return { success: true };
+
+    } catch (error) {
+
+        throw error;
     }
-
-    const payment = await Payment.findOne({
-        where: { transaction_id: razorpay_order_id },
-    });
-
-    if (!payment) throw new ApiError(404, "Payment not found");
-
-    // update payment
-    await payment.update({
-        status: "success",
-        transaction_id: razorpay_payment_id,
-        payment_response: data,
-    });
-
-    // update order
-    await Order.update(
-        { payment_status: "PAID", order_status: "CONFIRMED" },
-        { where: { id: payment.order_id } }
-    );
-
-    const cart = await Cart.findOne({
-        where: { user_id },
-    });
-
-    if (!cart) return;
-
-    await CartItem.destroy({
-        where: { cart_id: cart.id },
-    });
-
-    return { success: true };
 }
 
-// =========================
-// 📦 LIST ORDERS
-// =========================
 
-
-
-
-// async function verifyPayment(data) {
-//     try {
-//         const {
-//             razorpay_order_id,
-//             razorpay_payment_id,
-//             razorpay_signature,
-//         } = data;
-
-//         console.log("========== 🔍 PAYMENT VERIFICATION START ==========");
-//         console.log("➡️ Incoming Data:", {
-//             razorpay_order_id,
-//             razorpay_payment_id,
-//             razorpay_signature,
-//         });
-
-//         // ✅ Step 1: Create body
-//         const body = `${razorpay_order_id}|${razorpay_payment_id}`;
-//         console.log("➡️ Generated Body:", body);
-
-//         // ✅ Step 2: Generate expected signature
-//         const expectedSignature = crypto
-//             .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-//             .update(body)
-//             .digest("hex");
-
-//         console.log("➡️ Expected Signature:", expectedSignature);
-//         console.log("➡️ Received Signature:", razorpay_signature);
-
-//         // ✅ Step 3: Compare
-//         if (expectedSignature !== razorpay_signature) {
-//             console.error("❌ SIGNATURE MISMATCH");
-//             console.error("Check:");
-//             console.error("- Razorpay Secret Key");
-//             console.error("- Order ID / Payment ID mismatch");
-//             console.error("- Test vs Live key mismatch");
-
-//             throw new Error("Invalid payment signature");
-//         }
-
-//         console.log("✅ Signature verified successfully");
-
-//         // ✅ Step 4: Find payment
-//         const payment = await Payment.findOne({
-//             where: { transaction_id: razorpay_order_id },
-//         });
-
-//         console.log("➡️ Payment Found:", payment ? payment.id : "NOT FOUND");
-
-//         if (!payment) {
-//             console.error("❌ Payment not found in DB");
-//             throw new Error("Payment not found");
-//         }
-
-//         // ✅ Step 5: Update payment
-//         await payment.update({
-//             status: "success",
-//             transaction_id: razorpay_payment_id,
-//             payment_response: data,
-//         });
-
-//         console.log("✅ Payment updated");
-
-//         // ✅ Step 6: Update order
-//         await Order.update(
-//             {
-//                 payment_status: "PAID",
-//                 order_status: "CONFIRMED",
-//             },
-//             {
-//                 where: { id: payment.order_id },
-//             }
-//         );
-
-//         console.log("✅ Order updated");
-
-//         // ⚠️ BUG FIX: user_id missing in your original code
-//         // 👉 you MUST pass user_id to this function OR fetch from order
-
-//         const order = await Order.findByPk(payment.order_id);
-
-//         if (order) {
-//             await Cart.destroy({
-//                 where: { user_id: order.user_id },
-//             });
-//             console.log("🛒 Cart cleared");
-//         }
-
-//         console.log("========== ✅ PAYMENT VERIFIED SUCCESS ==========");
-
-//         return { success: true };
-
-//     } catch (error) {
-//         console.error("========== ❌ VERIFICATION FAILED ==========");
-//         console.error(error.message);
-//         console.error("Full Error:", error);
-//         throw error;
-//     }
-// }
-
+/**
+ * LIST ALL ORDERS
+ */
 async function listAllOrders(query = {}) {
     const {
         page = 1,
@@ -319,6 +266,7 @@ async function listAllOrders(query = {}) {
             "user_id",
             "address_id",
             "total_amount",
+            "order_code",
             "order_status",
             "payment_status",
             "payment_method",
@@ -400,7 +348,9 @@ async function listAllOrders(query = {}) {
     };
 }
 
-
+/**
+ * LIST USER ORDERS
+ */
 async function listOrders(user_id, query = {}) {
     const { page = 1, limit = 10 } = query;
 
@@ -417,6 +367,7 @@ async function listOrders(user_id, query = {}) {
             "user_id",
             "address_id",
             "total_amount",
+            "order_code",
             "order_status",
             "payment_status",
             "payment_method",
@@ -506,6 +457,7 @@ async function getOrderById(user_id, order_id) {
             "user_id",
             "address_id",
             "total_amount",
+            "order_code",
             "order_status",
             "payment_status",
             "payment_method",

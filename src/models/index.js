@@ -41,6 +41,8 @@ require("../modules/control-panel/address/address.model")
 require("../modules/control-panel/orders/order.model");
 require("../modules/control-panel/orders/payment.model");
 
+require("../modules/control-panel/serviceBooking/serviceBooking.model");
+
 /* =========================================================
    INITIALIZE ALL LINKS
 ========================================================= */

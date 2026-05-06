@@ -5,7 +5,7 @@ const Order = sequelize.define("Order", {
     id: { type: DataTypes.BIGINT, autoIncrement: true, primaryKey: true },
     user_id: { type: DataTypes.BIGINT, allowNull: false },
     address_id: { type: DataTypes.BIGINT, allowNull: false },
-
+    order_code: { type: DataTypes.STRING(50), allowNull: false, unique: true },
     total_amount: { type: DataTypes.DECIMAL(12, 2), allowNull: false },
     order_status: {
         type: DataTypes.ENUM("PENDING", "CONFIRMED", "SHIPPED", "DELIVERED", "CANCELLED"),

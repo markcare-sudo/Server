@@ -36,7 +36,7 @@ const create = asyncHandler(async (req, res) => {
 
     // ✅ IMAGES FROM CLOUDINARY
     const images = (req.files || []).map((file, index) => ({
-        image_url: file.path, // cloudinary url
+        url: file.filename, // cloudinary url
         is_primary: index === 0,
         sort_order: index
     }));
@@ -60,7 +60,7 @@ const update = asyncHandler(async (req, res) => {
     const schedule = safeParse(req.body.schedule, null);
 
     const images = (req.files || []).map((file, index) => ({
-        image_url: file.path,
+        url: file.filename,
         is_primary: index === 0,
         sort_order: index
     }));

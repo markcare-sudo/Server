@@ -53,7 +53,7 @@ async function getCatalog(query = {}) {
             {
                 model: ServiceImage,
                 as: "images",
-                attributes: ["id", "image_url", "is_primary"]
+                attributes: ["id", "url", "is_primary"]
             }
         ],
         order: [["created_at", "DESC"]]

@@ -172,7 +172,9 @@ async function updateProduct(id, data) {
         // ✅ SLUG UPDATE
         // =========================
         if (productData.name && productData.name !== product.name) {
-            productData.slug = `${productData.name.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`;
+            productData.slug = `${productData.name
+                .toLowerCase()
+                .replace(/\s+/g, "-")}-${Date.now()}`;
         }
 
         await product.update(productData, { transaction: t });
@@ -180,7 +182,7 @@ async function updateProduct(id, data) {
         // =========================
         // ✅ VARIANTS (SAFE UPDATE)
         // =========================
-        let variantIdMap = {}; // ⭐ index → actual DB id
+        let variantIdMap = {};
 
         if (variants !== undefined) {
             const existingVariants = await ProductVariant.findAll({
@@ -191,8 +193,8 @@ async function updateProduct(id, data) {
             const existingIds = existingVariants.map(v => v.id);
             const incomingIds = variants.filter(v => v.id).map(v => v.id);
 
-            // 1️⃣ DELETE removed variants (⚠️ only if safe)
-            const toDelete = existingIds.filter(id => !incomingIds.includes(id));
+            // 1️⃣ DELETE removed variants
+            const toDelete = existingIds.filter(vId => !incomingIds.includes(vId));
 
             if (toDelete.length) {
                 await ProductVariant.destroy({
@@ -201,7 +203,7 @@ async function updateProduct(id, data) {
                 });
             }
 
-            // 2️⃣ UPDATE existing variants + map
+            // 2️⃣ UPDATE existing
             for (let i = 0; i < variants.length; i++) {
                 const variant = variants[i];
 
@@ -215,7 +217,7 @@ async function updateProduct(id, data) {
                 }
             }
 
-            // 3️⃣ CREATE new variants
+            // 3️⃣ CREATE new
             const newVariants = variants.filter(v => !v.id);
 
             if (newVariants.length) {
@@ -227,7 +229,6 @@ async function updateProduct(id, data) {
                     { transaction: t, returning: true }
                 );
 
-                // map new ones
                 let newIndex = 0;
                 for (let i = 0; i < variants.length; i++) {
                     if (!variants[i].id) {
@@ -239,10 +240,11 @@ async function updateProduct(id, data) {
         }
 
         // =========================
-        // ✅ IMAGES (FULL REPLACE - SAFE)
+        // ✅ IMAGES (SAFE - ONLY IF NEW UPLOAD)
         // =========================
-        if (images !== undefined) {
-            // 1️⃣ Fetch old images
+        if (images && images.length > 0) {
+
+            // 1️⃣ Get old images
             const oldImages = await ProductImage.findAll({
                 where: { product_id: id },
                 transaction: t
@@ -255,44 +257,36 @@ async function updateProduct(id, data) {
                 transaction: t
             });
 
-            // 3️⃣ Delete files (optional but good)
-            for (const img of oldImages) {
-                if (img.url) {
-                    try {
-                        await deleteFile(img.url);
-                    } catch (err) {
-                        console.warn("Failed to delete file:", img.url);
-                    }
-                }
-            }
+            // 3️⃣ Delete Cloudinary files (public_id)
+            await Promise.all(
+                oldImages.map(img => img.url && deleteFile(img.url))
+            );
 
             // 4️⃣ Insert new images
-            if (images.length) {
-                const imagePayload = images.map((img, index) => {
-                    let variant_id = null;
+            const imagePayload = images.map((img, index) => {
+                let variant_id = null;
 
-                    // ✅ Extract variant index from field name
-                    const match = img.fieldName?.match(/variant_(\d+)_images/);
+                // map variant index → actual DB id
+                const match = img.fieldName?.match(/variant_(\d+)_images/);
 
-                    if (match) {
-                        const variantIndex = Number(match[1]);
-                        variant_id = variantIdMap[variantIndex] || null;
-                    }
+                if (match) {
+                    const variantIndex = Number(match[1]);
+                    variant_id = variantIdMap[variantIndex] || null;
+                }
 
-                    return {
-                        url: img.url,
-                        product_id: id,
-                        variant_id,
-                        is_primary: variant_id
-                            ? false
-                            : (img.is_primary ?? index === 0),
-                        alt_text: product.name,
-                        sort_order: index
-                    };
-                });
+                return {
+                    url: img.url, // ✅ public_id only
+                    product_id: id,
+                    variant_id,
+                    is_primary: variant_id
+                        ? false
+                        : (img.is_primary ?? index === 0),
+                    alt_text: product.name,
+                    sort_order: index
+                };
+            });
 
-                await ProductImage.bulkCreate(imagePayload, { transaction: t });
-            }
+            await ProductImage.bulkCreate(imagePayload, { transaction: t });
         }
 
         return product;

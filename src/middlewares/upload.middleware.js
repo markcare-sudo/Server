@@ -39,17 +39,35 @@ const cloudinary = require("../config/cloudinary");
 // ==============================
 // ✅ STORAGE CONFIG (FIXED)
 // ==============================
+// const storage = new CloudinaryStorage({
+//   cloudinary,
+//   params: async (req, file) => {
+//     const folder = req.body.folder || "services";
+
+//     return {
+//       folder,
+//       resource_type: "auto",
+
+//       // ✅ IMPORTANT: control public_id
+//       public_id: `${Date.now()}-${file.originalname.split(".")[0]}`,
+//     };
+//   },
+// });
+
 const storage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
-    const folder = req.body.folder || "services";
+    const folder = req.body.folder || "products";
+
+    const cleanName = file.originalname
+      .split(".")[0]
+      .replace(/\s+/g, "-")
+      .toLowerCase();
 
     return {
-      folder,
+      folder, // ✅ folder handled here
       resource_type: "auto",
-
-      // ✅ IMPORTANT: control public_id
-      public_id: `${Date.now()}-${file.originalname.split(".")[0]}`,
+      public_id: `${Date.now()}-${cleanName}`, // ✅ NO folder here
     };
   },
 });
@@ -72,13 +90,39 @@ const upload = multer({
 // ==============================
 // ✅ NEW WAY (USE public_id)
 // ==============================
+// const deleteFile = async (publicId) => {
+//   try {
+//     if (!publicId) return;
+
+//     await cloudinary.uploader.destroy(publicId);
+//   } catch (error) {
+//     console.error("Cloudinary delete error:", error.message);
+//   }
+// };
+
+
 const deleteFile = async (publicId) => {
   try {
     if (!publicId) return;
 
-    await cloudinary.uploader.destroy(publicId);
+    const result = await cloudinary.uploader.destroy(publicId, {
+      resource_type: "image", // or "auto" if mixed uploads
+    });
+
+    // ✅ Handle edge cases
+    if (!["ok", "not found"].includes(result.result)) {
+      console.warn("Cloudinary delete unexpected response:", {
+        publicId,
+        result,
+      });
+    }
+
+    return result;
   } catch (error) {
-    console.error("Cloudinary delete error:", error.message);
+    console.error("Cloudinary delete error:", {
+      publicId,
+      message: error.message,
+    });
   }
 };
 
