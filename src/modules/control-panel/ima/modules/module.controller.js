@@ -8,7 +8,6 @@ const { ok, created } = require("../../../../utils/apiResponse");
 
 // CREATE
 exports.create = asyncHandler(async (req, res) => {
-    console.log(req.user, req.body)
     const data = await moduleService.createModule(req.user, req.body);
     return created(res, data, "Module created successfully");
 });
