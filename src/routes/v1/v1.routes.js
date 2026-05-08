@@ -8,6 +8,10 @@ router.use("/bootstrap", require("../../modules/control-panel/ima/bootstrap/boot
 router.use("/auth", require("../../modules/auth/auth.routes"));
 router.use("/auth/profile", require("../../modules/auth/profile/authProfile.routes"));
 
+// TECHNICIAN MODULE ROUTES
+router.use("/technician", require("../../modules/control-panel/technicianProfile/technicianAuth.routes"));
+router.use("/technician-documents", require("../../modules/control-panel/technician-documents/technician-document.routes"));
+
 // IAM MODULE ROUTES
 router.use("/iam/permissions", require("../../modules/control-panel/ima/permissions/permission.routes"));
 router.use("/iam/roles", require("../../modules/control-panel/ima/roles/role.routes"));

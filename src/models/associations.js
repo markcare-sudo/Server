@@ -172,6 +172,7 @@ const Payment = require("../modules/control-panel/orders/payment.model");
 const OrderItem = require("../modules/control-panel/orders/orderItem.model");
 const Module = require("../modules/control-panel/ima/modules/module.model");
 const ServiceBooking = require("../modules/control-panel/serviceBooking/serviceBooking.model");
+const TechnicianProfile = require("../modules/control-panel/technicianProfile/technicianProfile.model");
 
 module.exports = () => {
 
@@ -261,6 +262,10 @@ module.exports = () => {
    // User <-> Order
    User.hasMany(Order, { foreignKey: "user_id", as: "orders", onDelete: "CASCADE" });
    Order.belongsTo(User, { foreignKey: "user_id", as: "user" });
+
+   // User <-> TechnicianProfile
+   User.hasOne(TechnicianProfile, { foreignKey: "user_id", as: "technician_profile", onDelete: "CASCADE" });
+   TechnicianProfile.belongsTo(User, { foreignKey: "user_id", as: "user" });
 
    // Order <-> Payment
    Order.hasOne(Payment, { foreignKey: "order_id", as: "payment", onDelete: "CASCADE" });

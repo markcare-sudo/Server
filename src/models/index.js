@@ -25,6 +25,10 @@ require("../modules/auth/otp/otp.model");
 require("../modules/auth/tokens/refreshToken.model");
 require("../modules/callbackRequest/callbackRequest.model");
 
+// Technician Profile
+require("../modules/control-panel/technicianProfile/technicianProfile.model");
+require("../modules/control-panel/technician-documents/technician-document.model");
+
 // Configarations
 require("../modules/control-panel/ima/modules/module.model");
 require("../modules/control-panel/ima/audit-logs/audit-log.model");
