@@ -3,8 +3,8 @@ const { sequelize } = require("../../../config/db");
 
 const Payment = sequelize.define("Payment", {
     id: { type: DataTypes.BIGINT, autoIncrement: true, primaryKey: true },
-    // booking_id: { type: DataTypes.BIGINT, allowNull: false, },
-    order_id: { type: DataTypes.BIGINT, allowNull: false, },
+    booking_id: { type: DataTypes.BIGINT, allowNull: true, },
+    order_id: { type: DataTypes.BIGINT, allowNull: true, },
     provider: { type: DataTypes.STRING(50), }, // razorpay / stripe
     method: { type: DataTypes.STRING },
     transaction_id: { type: DataTypes.STRING },

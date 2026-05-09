@@ -1,24 +1,71 @@
-// socket/index.js
-const { Server } = require('socket.io');
+let ioInstance;
 
-function initSocket(server) {
-  const io = new Server(server, {
-    cors: {
-      origin: '*', // you can restrict later using process.env.FRONTEND_URL
-      credentials: true,
-    },
-    transports: ['websocket', 'polling'],
-  });
+const setIO = (io) => {
+  ioInstance = io;
+};
 
-  io.on('connection', (socket) => {
-    console.log('🔌 Socket connected:', socket.id);
+const getIO = () => {
+  if (!ioInstance) {
+    console.warn("Socket.io not initialized");
+    return null;
+  }
 
-    socket.on('disconnect', (reason) => {
-      console.log('🔌 Socket disconnected:', socket.id, reason);
-    });
-  });
+  return ioInstance;
+};
 
-  return io;
-}
+// ==============================
+// BOOKING ROOM UPDATE
+// ==============================
 
-module.exports = { initSocket };
+const emitBookingUpdate = (
+  bookingId,
+  event,
+  payload
+) => {
+
+  const io = getIO();
+
+  if (!io) return;
+
+  io.of("/bookings")
+    .to(`booking:${bookingId}`)
+    .emit(event, payload);
+};
+
+// ==============================
+// NEW BOOKING
+// ==============================
+
+const emitNewBooking = (payload) => {
+
+  const io = getIO();
+
+  if (!io) return;
+
+  io.of("/bookings")
+    .to("admins")
+    .emit("new-booking", payload);
+};
+
+// ==============================
+// NEW ORDER
+// ==============================
+
+const emitNewOrder = (payload) => {
+
+  const io = getIO();
+
+  if (!io) return;
+
+  io.of("/orders")
+    .to("admins")
+    .emit("new-order", payload);
+};
+
+module.exports = {
+  setIO,
+  getIO,
+  emitBookingUpdate,
+  emitNewBooking,
+  emitNewOrder
+};

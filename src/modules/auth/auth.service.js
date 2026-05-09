@@ -51,6 +51,97 @@ async function requestLoginSignupOtp({ identifier, channel = "EMAIL", ip, ua }) 
 //
 // ✅ VERIFY OTP + LOGIN / SIGNUP
 //
+// async function verifyOtpAndAuth({ requestId, otp, name, ip, ua }) {
+//   if (!requestId || !otp) {
+//     throw new ApiError(400, "requestId and otp required");
+//   }
+
+//   const otpResult = await verifyOtp({ requestId, otp, purpose: "AUTH_OTP" });
+//   if (!otpResult) {
+//     throw new ApiError(401, "Invalid or expired OTP");
+//   }
+
+//   const identifier = otpResult.destination;
+//   const t = await sequelize.transaction();
+
+//   try {
+//     let user = await User.findOne({
+//       where: {
+//         [Op.or]: [{ email: identifier }, { phone: identifier }]
+//       },
+//       transaction: t,
+//     });
+
+//     user.update({
+//       is_email_verified: true,
+//       // is_phone_verified: true,
+//     }, { transaction: t });
+
+//     let isNewUser = false;
+
+//     // ✅ CREATE USER IF NOT EXISTS
+//     if (!user) {
+//       isNewUser = true;
+
+//       user = await User.create({
+//         name: name || "New User",
+//         email: identifier.includes("@") ? identifier : null,
+//         phone: !identifier.includes("@") ? identifier : null,
+//         is_email_verified: true,
+//         // is_phone_verified: true,
+//         is_active: true,
+//       }, { transaction: t });
+
+//       const customerRole = await Role.findOne({
+//         where: { code: "CUSTOMER" },
+//         transaction: t
+//       });
+
+//       if (!customerRole) {
+//         throw new Error("CUSTOMER role not found");
+//       }
+
+//       await UserRole.create({
+//         user_id: user.id,
+//         role_id: customerRole.id,
+//       }, { transaction: t });
+//     }
+
+//     // ✅ RELOAD USER WITH ROLES
+//     user = await User.findOne({
+//       where: { id: user.id },
+//       include: [{
+//         model: Role,
+//         as: "user_roles",
+//         attributes: ["id", "code"],
+//         through: { attributes: [] }
+//       }],
+//       transaction: t,
+//     });
+
+//     // ✅ ISSUE TOKENS
+//     const authData = await issueTokens(user, { ip, ua, transaction: t });
+
+//     await t.commit();
+
+//     await log({
+//       userId: user.id,
+//       action: "LOGIN_SUCCESS",
+//       module: "AUTH",
+//       description: `User logged in successfully (${identifier})`,
+//       ip,
+//       ua
+//     });
+
+//     return { ...authData, isNewUser };
+
+//   } catch (error) {
+//     await t.rollback();
+//     console.error("AUTH ERROR:", error);
+//     throw error;
+//   }
+// }
+
 async function verifyOtpAndAuth({ requestId, otp, name, ip, ua }) {
   if (!requestId || !otp) {
     throw new ApiError(400, "requestId and otp required");
@@ -72,23 +163,17 @@ async function verifyOtpAndAuth({ requestId, otp, name, ip, ua }) {
       transaction: t,
     });
 
-    user.update({
-      is_email_verified: true,
-      // is_phone_verified: true,
-    }, { transaction: t });
-
     let isNewUser = false;
 
-    // ✅ CREATE USER IF NOT EXISTS
     if (!user) {
+      // ✅ CASE: NEW USER
       isNewUser = true;
-
       user = await User.create({
         name: name || "New User",
         email: identifier.includes("@") ? identifier : null,
         phone: !identifier.includes("@") ? identifier : null,
-        is_email_verified: true,
-        // is_phone_verified: true,
+        is_email_verified: identifier.includes("@"), // Verify email if identifier is email
+        is_phone_verified: !identifier.includes("@"), // Verify phone if identifier is phone
         is_active: true,
       }, { transaction: t });
 
@@ -97,13 +182,19 @@ async function verifyOtpAndAuth({ requestId, otp, name, ip, ua }) {
         transaction: t
       });
 
-      if (!customerRole) {
-        throw new Error("CUSTOMER role not found");
-      }
+      if (!customerRole) throw new Error("CUSTOMER role not found");
 
       await UserRole.create({
         user_id: user.id,
         role_id: customerRole.id,
+      }, { transaction: t });
+
+    } else {
+      // ✅ CASE: EXISTING USER
+      // Safe to update now because we know 'user' is not null
+      await user.update({
+        is_email_verified: identifier.includes("@") ? true : user.is_email_verified,
+        is_phone_verified: !identifier.includes("@") ? true : user.is_phone_verified,
       }, { transaction: t });
     }
 
@@ -124,6 +215,7 @@ async function verifyOtpAndAuth({ requestId, otp, name, ip, ua }) {
 
     await t.commit();
 
+    // Log after commit to ensure DB is updated
     await log({
       userId: user.id,
       action: "LOGIN_SUCCESS",
@@ -136,7 +228,7 @@ async function verifyOtpAndAuth({ requestId, otp, name, ip, ua }) {
     return { ...authData, isNewUser };
 
   } catch (error) {
-    await t.rollback();
+    if (t) await t.rollback();
     console.error("AUTH ERROR:", error);
     throw error;
   }
