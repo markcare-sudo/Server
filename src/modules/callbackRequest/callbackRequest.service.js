@@ -1,12 +1,13 @@
 /* modules/enquiry/callback-request.service.js */
 
+const { Op } = require("sequelize");
 const { CallbackRequest } = require("./callbackRequest.model");
 
 
 async function createCallbackRequest(payload) {
   const { product_name, product_price, phone, email } = payload;
 
-  if (!phone ) {
+  if (!phone) {
     const err = new Error("phone is required");
     err.status = 400;
     throw err;
@@ -23,20 +24,43 @@ async function createCallbackRequest(payload) {
   return record;
 }
 
-async function listCallbackRequests({ page = 1, limit = 10, status }) {
-  const offset = (page - 1) * limit;
+async function getCallbackRequestById({ id }) {
+  const record = await CallbackRequest.findByPk(id);
+  return record;
+}
+
+async function listCallbackRequests({ page = 1, limit = 10, status, source, search }) {
+  const parsedLimit = parseInt(limit, 10) || 10;
+  const parsedPage = parseInt(page, 10) || 1;
+  const offset = (parsedPage - 1) * parsedLimit;
 
   const where = {};
   if (status) where.status = status;
+  if (source) where.source = source;
 
-  const records = await CallbackRequest.findAll({
+  if (search) {
+    where[Op.or] = [
+      { phone: { [Op.like]: `%${search}%` } },
+      { email: { [Op.like]: `%${search}%` } },
+      { product_name: { [Op.like]: `%${search}%` } }
+    ];
+  }
+
+  // 🔴 CRITICAL: Must be findAndCountAll to calculate total entries
+  const { count, rows } = await CallbackRequest.findAndCountAll({
     where,
-    limit: parseInt(limit),
-    offset: parseInt(offset),
+    limit: parsedLimit,
+    offset: offset,
     order: [["id", "DESC"]],
   });
 
-  return records;
+  return {
+    total_items: count,
+    total_pages: Math.ceil(count / parsedLimit),
+    current_page: parsedPage,
+    limit: parsedLimit,
+    data: rows, // This wraps your array safely
+  };
 }
 
 async function updateCallbackStatus({ id, status }) {
@@ -61,6 +85,7 @@ async function updateCallbackStatus({ id, status }) {
 
 module.exports = {
   createCallbackRequest,
+  getCallbackRequestById,
   listCallbackRequests,
   updateCallbackStatus,
 };

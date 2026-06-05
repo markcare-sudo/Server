@@ -84,7 +84,6 @@ async function addToCart(user_id, { product_id, product_variant_id, quantity = 1
             } catch (error) {
                 // 🔥 Handle race condition
                 if (error.name === "SequelizeUniqueConstraintError") {
-
                     await CartItem.update(
                         {
                             quantity: sequelize.literal(`quantity + ${quantity}`)
@@ -97,7 +96,6 @@ async function addToCart(user_id, { product_id, product_variant_id, quantity = 1
                             transaction: t
                         }
                     );
-
                 } else {
                     throw error;
                 }
@@ -298,7 +296,7 @@ async function recalculateCart(cart_id, transaction) {
     let count = 0;
 
     for (const item of items) {
-        const price = item.variant.discount_price || item.variant.price;
+        const price = item.variant.price;
         total += price * item.quantity;
         count += item.quantity;
     }
